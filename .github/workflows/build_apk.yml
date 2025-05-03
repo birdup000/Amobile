@@ -6,7 +6,10 @@ on:
 jobs:
   apk:
     name: Build APK
+    # Using a pre-configured container with Flutter and Android SDK already installed
     runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/cirruslabs/flutter:stable
     env:
       APP_NAME: AGiXT
       AGIXT_SERVER: https://api.agixt.dev
@@ -26,26 +29,10 @@ jobs:
           release_branches: main
           create_annotated_tag: true
           dry_run: true
-      - name: Set up JDK
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'zulu'
-          java-version: '17'
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.x'
-          channel: 'stable'
-      - name: Accept Android SDK Licenses
-        run: yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses
       - name: Install dependencies
         run: flutter pub get
       - name: Run tests
         run: flutter test
-      - name: Generate Gradle wrapper
-        run: |
-          cd android
-          gradle wrapper
       - name: Build Android release
         run: |
           flutter build apk --release
