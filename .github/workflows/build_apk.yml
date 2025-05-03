@@ -8,7 +8,7 @@ jobs:
     name: Build APK
     runs-on: ubuntu-latest
     container:
-      image: joshxt/flutterbuilder:latest
+      image: joshxt/flutterbuilder:main
     env:
       APP_NAME: AGiXT
       AGIXT_SERVER: https://api.agixt.dev
