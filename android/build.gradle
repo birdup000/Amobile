@@ -1,20 +1,21 @@
 allprojects {
     repositories {
-        // Keep mavenLocal at the top to ensure it's searched first
-        mavenLocal()
         google()
         mavenCentral()
+        // Use jcenter() for FFmpeg packages
         jcenter()
+        // Add JitPack as primary source for FFmpeg Kit
         maven { url 'https://jitpack.io' }
-        // Remove any reference to private/unavailable repositories
-    }
-
-    // Simplify the resolution strategy
-    configurations.all {
-        resolutionStrategy {
-            // Use the minimal FFmpeg version instead of the https version
-            force 'com.arthenica:ffmpeg-kit-min:5.1'
+        // Keep Arthenica repo as fallback but with updated URL
+        maven { 
+            url 'https://repo1.maven.org/maven2/' 
+            content {
+                // This repository only for FFmpeg fallbacks
+                includeGroup "com.arthenica"
+            }
         }
+        // Original Arthenica URL as last resort
+        maven { url 'https://repo.arthenica.com/repository/ffmpeg-kit/' }
     }
 
     subprojects {

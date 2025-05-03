@@ -28,28 +28,15 @@ jobs:
           release_branches: main
           create_annotated_tag: true
           dry_run: true
-      
-      - name: Setup Maven
-        run: |
-          apt-get update && apt-get install -y maven
-      
       - name: Setup FFmpeg repositories cache
         uses: actions/cache@v3
         with:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-            ~/.m2/repository
-          key: ${{ runner.os }}-gradle-maven-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
-            ${{ runner.os }}-gradle-maven-
             ${{ runner.os }}-gradle-
-      
-      - name: Run FFmpeg setup script
-        run: |
-          chmod +x ./scripts/setup_ffmpeg.sh
-          ./scripts/setup_ffmpeg.sh
-      
       - name: Git Safe Directory
         run: |
             git config --global --add safe.directory /usr/local/flutter && \
@@ -57,14 +44,11 @@ jobs:
 
       - name: Install dependencies
         run: flutter pub get
-      
       - name: Run tests
         run: flutter test
-      
       - name: Build Android release
         run: |
           flutter build apk --release
-      
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
