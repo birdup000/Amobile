@@ -6,10 +6,15 @@ on:
 jobs:
   apk:
     name: Build APK
-    # Using a pre-configured container with Flutter and Android SDK already installed
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/cirruslabs/flutter:stable
+      # Using a more comprehensive container with Android SDK platforms and NDK pre-installed
+      image: mingc/android-build-box:latest
+      # This image contains:
+      # - Android SDK 29, 30, 31, 32, 33, 34
+      # - Android build tools 32.0.0, 33.0.0, 34.0.0
+      # - Android NDK 25, 26 
+      # - Flutter stable
     env:
       APP_NAME: AGiXT
       AGIXT_SERVER: https://api.agixt.dev
@@ -29,6 +34,14 @@ jobs:
           release_branches: main
           create_annotated_tag: true
           dry_run: true
+      - name: Install NDK 27 if needed
+        run: |
+          if [ ! -d "$ANDROID_SDK_ROOT/ndk/27.0.11902837" ]; then
+            echo "NDK 27 not found, installing..."
+            yes | sdkmanager "ndk;27.0.11902837"
+          else
+            echo "NDK 27 already installed, skipping"
+          fi
       - name: Install dependencies
         run: flutter pub get
       - name: Run tests
