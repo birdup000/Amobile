@@ -1,7 +1,7 @@
 import 'package:agixt/models/agixt/whispermodel.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:whisper_ggml/whisper_ggml.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 class WhisperSettingsPage extends StatefulWidget {
   const WhisperSettingsPage({super.key});
@@ -47,15 +47,28 @@ class WhisperSettingsPageState extends State<WhisperSettingsPage> {
   String? _selectedModel;
   String? _selectedMode;
   String? _selectedLanguage;
+  bool _isRecognitionAvailable = false;
 
   final _apiUrlController = TextEditingController();
   final _apiKeyController = TextEditingController();
   final _remoteModelController = TextEditingController();
+  final stt.SpeechToText _speech = stt.SpeechToText();
 
   @override
   void initState() {
     super.initState();
     _loadSelectedModel();
+    _checkSpeechRecognitionAvailability();
+  }
+
+  Future<void> _checkSpeechRecognitionAvailability() async {
+    final available = await _speech.initialize(
+      onError: (error) => debugPrint('Speech recognition error: $error'),
+      onStatus: (status) => debugPrint('Speech recognition status: $status'),
+    );
+    setState(() {
+      _isRecognitionAvailable = available;
+    });
   }
 
   Future<void> _loadSelectedModel() async {
@@ -91,23 +104,42 @@ class WhisperSettingsPageState extends State<WhisperSettingsPage> {
     }
   }
 
-  Future<void> _downloadModel() async {
-    // Implement the logic to download the model here
-    final whisper = WhisperController();
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    final model = AGiXTWhisperModel(prefs.getString('whisper_model') ?? '');
+  Future<void> _testSpeechRecognition() async {
+    if (!_isRecognitionAvailable) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Speech recognition not available on this device')),
+      );
+      return;
+    }
 
-    try {
-      await whisper.downloadModel(model.model);
-    } catch (e) {}
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Model $_selectedModel downloaded')),
+    bool success = await _speech.listen(
+      onResult: (result) {
+        if (result.finalResult) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Recognized: ${result.recognizedWords}')),
+          );
+          _speech.stop();
+        }
+      },
+      listenFor: const Duration(seconds: 10),
+      pauseFor: const Duration(seconds: 3),
+      localeId: _selectedLanguage,
+      cancelOnError: true,
     );
+
+    if (!success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to start speech recognition')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Listening...')),
+      );
+    }
   }
 
   Future<void> _saveRemote() async {
-    // Implement the logic to download the model here
+    // Implement the logic to save remote settings
     try {
       if (_apiUrlController.text.isEmpty) {
         throw Exception("API URL is required");
@@ -124,7 +156,7 @@ class WhisperSettingsPageState extends State<WhisperSettingsPage> {
           'whisper_remote_model', _remoteModelController.text);
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Whisper configuration saved!')),
+        const SnackBar(content: Text('Whisper configuration saved!')),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -136,8 +168,8 @@ class WhisperSettingsPageState extends State<WhisperSettingsPage> {
   @override
   Widget build(BuildContext context) {
     final localOpts = [
-      Text('Select Model:', style: TextStyle(fontSize: 18)),
-      SizedBox(height: 10),
+      const Text('Select Model/Accuracy:', style: TextStyle(fontSize: 18)),
+      const SizedBox(height: 10),
       DropdownButton<String>(
         value: _selectedModel,
         isExpanded: true,
@@ -154,57 +186,67 @@ class WhisperSettingsPageState extends State<WhisperSettingsPage> {
           );
         }).toList(),
       ),
-      SizedBox(height: 20),
+      const SizedBox(height: 20),
       ElevatedButton(
-        onPressed: _downloadModel,
+        onPressed: _testSpeechRecognition,
         style: ElevatedButton.styleFrom(
-          minimumSize: Size(double.infinity, 36), // Expand full width
+          minimumSize: const Size(double.infinity, 36), // Expand full width
         ),
-        child: const Text('Download Model'),
+        child: const Text('Test Speech Recognition'),
       ),
+      const SizedBox(height: 10),
+      _isRecognitionAvailable
+          ? const Text(
+              'Speech recognition is available on this device',
+              style: TextStyle(color: Colors.green),
+            )
+          : const Text(
+              'Speech recognition is NOT available on this device',
+              style: TextStyle(color: Colors.red),
+            ),
     ];
     final remoteOpts = [
-      Text('Whisper server details:', style: TextStyle(fontSize: 18)),
-      SizedBox(height: 10),
+      const Text('Whisper server details:', style: TextStyle(fontSize: 18)),
+      const SizedBox(height: 10),
       TextField(
-        decoration: InputDecoration(labelText: 'API URL'),
+        decoration: const InputDecoration(labelText: 'API URL'),
         controller: _apiUrlController,
       ),
-      SizedBox(height: 10),
+      const SizedBox(height: 10),
       TextField(
-        decoration: InputDecoration(labelText: 'API Key'),
+        decoration: const InputDecoration(labelText: 'API Key'),
         controller: _apiKeyController,
       ),
-      SizedBox(height: 20),
+      const SizedBox(height: 20),
       TextField(
-        decoration: InputDecoration(labelText: 'Model'),
+        decoration: const InputDecoration(labelText: 'Model'),
         controller: _remoteModelController,
       ),
-      SizedBox(height: 20),
+      const SizedBox(height: 20),
       ElevatedButton(
         onPressed: _saveRemote,
         style: ElevatedButton.styleFrom(
-          minimumSize: Size(double.infinity, 36), // Expand full width
+          minimumSize: const Size(double.infinity, 36), // Expand full width
         ),
-        child: Text('Save'),
+        child: const Text('Save'),
       ),
     ];
     return Scaffold(
       appBar: AppBar(
-        title: Text('Whisper Settings'),
+        title: const Text('Speech Recognition Settings'),
       ),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child:
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('Select Mode:', style: TextStyle(fontSize: 18)),
-            SizedBox(height: 10),
+            const Text('Select Mode:', style: TextStyle(fontSize: 18)),
+            const SizedBox(height: 10),
             DropdownButton(
               value: _selectedMode,
               onChanged: (String? newValue) => _saveSelectedMode(newValue!),
               isExpanded: true,
-              items: [
+              items: const [
                 DropdownMenuItem(
                   value: "local",
                   child: Text("Local"),
@@ -215,9 +257,9 @@ class WhisperSettingsPageState extends State<WhisperSettingsPage> {
                 )
               ],
             ),
-            SizedBox(height: 20),
-            Text('Select Language:', style: TextStyle(fontSize: 18)),
-            SizedBox(height: 10),
+            const SizedBox(height: 20),
+            const Text('Select Language:', style: TextStyle(fontSize: 18)),
+            const SizedBox(height: 10),
             DropdownButton(
                 value: _selectedLanguage,
                 onChanged: (String? newValue) =>

@@ -60,14 +60,11 @@ dependencies:
   csv: ^6.0.0
   fast_csv: ^0.2.11
   chaleno: ^0.0.8
-  whisper_ggml: ^1.1.1
   flutter_appauth: ^6.0.2
-  # Using a specific git tag for ffmpeg_kit_flutter
-  ffmpeg_kit_flutter:
-    git:
-      url: https://github.com/arthenica/ffmpeg-kit
-      path: flutter/flutter
-      ref: v6.0.LTS # Use the latest LTS tag
+  # speech_to_text provides native speech recognition functionality
+  speech_to_text: ^6.6.0
+  # flutter_sound for audio recording (doesn't rely on ffmpeg)
+  flutter_sound: ^9.2.13
 
 dev_dependencies:
   flutter_test:

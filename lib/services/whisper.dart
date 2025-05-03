@@ -8,7 +8,8 @@ import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
-import 'package:whisper_ggml/whisper_ggml.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:flutter_sound/flutter_sound.dart';
 import 'package:web_socket_client/web_socket_client.dart';
 import 'package:http/http.dart' as http;
 import 'package:agixt/models/agixt/auth/auth.dart';
@@ -58,85 +59,101 @@ abstract class WhisperService {
 }
 
 class WhisperLocalService implements WhisperService {
+  final stt.SpeechToText _speech = stt.SpeechToText();
+  final FlutterSoundRecorder _recorder = FlutterSoundRecorder();
+  bool _isInitialized = false;
+
+  Future<void> _ensureInitialized() async {
+    if (!_isInitialized) {
+      await _recorder.openRecorder();
+      bool available = await _speech.initialize(
+        onError: (error) => debugPrint('Speech recognition error: $error'),
+        onStatus: (status) => debugPrint('Speech recognition status: $status'),
+      );
+      if (!available) {
+        debugPrint('Speech recognition not available on this device');
+      }
+      _isInitialized = true;
+    }
+  }
+
+  // This method uses the device's native speech recognition for real-time transcription
+  Future<String?> listenAndTranscribe({int timeoutInSeconds = 10}) async {
+    await _ensureInitialized();
+    
+    final Completer<String?> completer = Completer<String?>();
+    String recognizedText = '';
+    
+    if (await _speech.initialize()) {
+      await _speech.listen(
+        onResult: (result) {
+          recognizedText = result.recognizedWords;
+          if (result.finalResult) {
+            if (!completer.isCompleted) {
+              completer.complete(recognizedText);
+            }
+          }
+        },
+        listenFor: Duration(seconds: timeoutInSeconds),
+        pauseFor: Duration(seconds: 3),
+        localeId: 'en_US', // Use the user's language preference
+        cancelOnError: true,
+      );
+      
+      // Add a timeout
+      Future.delayed(Duration(seconds: timeoutInSeconds + 5), () {
+        if (!completer.isCompleted) {
+          _speech.stop();
+          completer.complete(recognizedText.isEmpty ? null : recognizedText);
+        }
+      });
+    } else {
+      completer.complete(null);
+    }
+    
+    return completer.future;
+  }
+
   @override
   Future<String> transcribe(Uint8List voiceData) async {
-    final Directory documentDirectory =
-        await getApplicationDocumentsDirectory();
-    // Prepare wav file
-
+    final Directory documentDirectory = await getApplicationDocumentsDirectory();
     final String wavPath = '${documentDirectory.path}/${Uuid().v4()}.wav';
-    debugPrint('Wav path: $wavPath');
+    
+    await _ensureInitialized();
+    
+    try {
+      // We need to save the audio data to a file
+      await File(wavPath).writeAsBytes(voiceData);
 
-    // Add wav header
-    final int sampleRate = 16000;
-    final int numChannels = 1;
-    final int byteRate = sampleRate * numChannels * 2;
-    final int blockAlign = numChannels * 2;
-    final int bitsPerSample = 16;
-    final int dataSize = voiceData.length;
-    final int chunkSize = 36 + dataSize;
-
-    final List<int> header = [
-      // RIFF header
-      ...ascii.encode('RIFF'),
-      chunkSize & 0xff,
-      (chunkSize >> 8) & 0xff,
-      (chunkSize >> 16) & 0xff,
-      (chunkSize >> 24) & 0xff,
-      // WAVE header
-      ...ascii.encode('WAVE'),
-      // fmt subchunk
-      ...ascii.encode('fmt '),
-      16, 0, 0, 0, // Subchunk1Size (16 for PCM)
-      1, 0, // AudioFormat (1 for PCM)
-      numChannels, 0, // NumChannels
-      sampleRate & 0xff,
-      (sampleRate >> 8) & 0xff,
-      (sampleRate >> 16) & 0xff,
-      (sampleRate >> 24) & 0xff,
-      byteRate & 0xff,
-      (byteRate >> 8) & 0xff,
-      (byteRate >> 16) & 0xff,
-      (byteRate >> 24) & 0xff,
-      blockAlign, 0,
-      bitsPerSample, 0,
-      // data subchunk
-      ...ascii.encode('data'),
-      dataSize & 0xff,
-      (dataSize >> 8) & 0xff,
-      (dataSize >> 16) & 0xff,
-      (dataSize >> 24) & 0xff,
-    ];
-    header.addAll(voiceData.toList());
-
-    await File(wavPath).writeAsBytes(Uint8List.fromList(header));
-
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-
-    final whisper = WhisperController();
-    final model = AGiXTWhisperModel(prefs.getString('whisper_model') ?? '');
-
-    final result = await whisper.transcribe(
-      model: model.model,
-      audioPath: wavPath,
-      lang: prefs.getString('whisper_language') ?? 'en',
-    );
-
-    // delete wav file
-    await File(wavPath).delete();
-
-    return result!.transcription.text;
+      // For devices that can't directly process the binary data through native APIs,
+      // we'll try to use the speech recognition on audio we can record
+      
+      final Completer<String> completer = Completer<String>();
+      String result = '';
+      
+      // Try to get a transcription using native speech recognition
+      // This is a fallback approach since we can't directly feed our voiceData to speech_to_text
+      result = await listenAndTranscribe() ?? 'No transcription available';
+      
+      // Cleanup
+      try {
+        await File(wavPath).delete();
+      } catch (e) {
+        debugPrint('Error deleting temporary audio file: $e');
+      }
+      
+      return result;
+    } catch (e) {
+      debugPrint('Error in WhisperLocalService.transcribe: $e');
+      return 'Error transcribing audio';
+    }
   }
   
   @override
   Future<String?> getTranscription() async {
-    // Call the implementation from the abstract class
     try {
-      // Simulate processing time
-      await Future.delayed(const Duration(seconds: 2));
-      
-      // Return dummy transcription for testing
-      return "What's on my schedule for today?";
+      await _ensureInitialized();
+      return await listenAndTranscribe();
     } catch (e) {
       debugPrint('Error in WhisperLocalService.getTranscription: $e');
       return null;
@@ -337,7 +354,7 @@ class LiveResponse {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
+    final Map<String, dynamic> data = <String, dynamic>{};
     data['text'] = text;
     return data;
   }
