@@ -4,6 +4,20 @@ allprojects {
         mavenCentral()
         maven { url 'https://jitpack.io' }
         jcenter() // Though deprecated, keeping for legacy dependencies
+        mavenLocal() // Add local Maven repository for local dependencies
+    }
+
+    // Add dependency substitution rules
+    configurations.all {
+        resolutionStrategy {
+            dependencySubstitution {
+                // Substitute missing Arthenica dependencies with JitPack alternatives
+                substitute module('com.arthenica:ffmpeg-kit-https:6.0-2.LTS') with module('com.github.tanersener:ffmpeg-kit-android-https:v6.0-2.LTS')
+            }
+            
+            // Force specific versions if needed
+            force 'com.github.tanersener:ffmpeg-kit-android-https:v6.0-2.LTS'
+        }
     }
 
     subprojects {
