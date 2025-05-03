@@ -1,4 +1,4 @@
-package dev.maartje.agixt
+package dev.agixt.agixt
 
 import android.app.Notification
 import android.app.NotificationChannel

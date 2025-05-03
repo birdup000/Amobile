@@ -60,7 +60,7 @@ void main() async {
   await BluetoothManager.singleton.initialize();
   BluetoothManager.singleton.attemptReconnectFromStorage();
 
-  var channel = const MethodChannel('dev.maartje.agixt/background_service');
+  var channel = const MethodChannel('dev.agixt.agixt/background_service');
   var callbackHandle = PluginUtilities.getCallbackHandle(backgroundMain);
   channel.invokeMethod('startService', callbackHandle?.toRawHandle());
 
@@ -76,7 +76,7 @@ class AppRetainWidget extends StatelessWidget {
 
   final Widget child;
 
-  final _channel = const MethodChannel('dev.maartje.agixt/app_retain');
+  final _channel = const MethodChannel('dev.agixt.agixt/app_retain');
 
   @override
   Widget build(BuildContext context) {

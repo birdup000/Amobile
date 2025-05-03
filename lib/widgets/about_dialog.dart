@@ -36,7 +36,7 @@ void showCustomAboutDialog(BuildContext context) async {
         const SizedBox(height: 2),
         OutlinedButton(
           onPressed: () => launchUrlString(
-            "https://ko-fi.com/maartjeme",
+            "https://ko-fi.com/agixtme",
             mode: LaunchMode.externalApplication,
           ),
           child: Row(

@@ -1,4 +1,4 @@
-package dev.maartje.agixt
+package dev.agixt.agixt
 
 import android.app.Service
 import android.content.Context
@@ -92,7 +92,7 @@ class BackgroundService : Service(), LifecycleDetector.Listener {
 
 
     companion object {
-        private const val SHARED_PREFERENCES_NAME = "dev.maartje.agixt.BackgroundService"
+        private const val SHARED_PREFERENCES_NAME = "dev.agixt.agixt.BackgroundService"
 
         private var callbackRawHandle: Long? = null;
 

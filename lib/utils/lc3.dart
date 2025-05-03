@@ -2,7 +2,7 @@ import 'package:flutter/services.dart';
 
 class LC3 {
   static const MethodChannel _channel =
-      MethodChannel('dev.maartje.agixt/channel');
+      MethodChannel('dev.agixt.agixt/channel');
 
   static Future<Uint8List> decodeLC3(Uint8List data) async {
     try {

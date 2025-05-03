@@ -1,4 +1,4 @@
-package dev.maartje.agixt
+package dev.agixt.agixt
 
 import android.os.Bundle
 import androidx.annotation.NonNull;
@@ -6,10 +6,10 @@ import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugins.GeneratedPluginRegistrant
 import io.flutter.plugin.common.MethodChannel
-import dev.maartje.agixt.cpp.Cpp
+import dev.agixt.agixt.cpp.Cpp
 
 class MainActivity: FlutterActivity() {
-    private val CHANNEL = "dev.maartje.agixt/channel"
+    private val CHANNEL = "dev.agixt.agixt/channel"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,7 +42,7 @@ class MainActivity: FlutterActivity() {
         }
 
         val binaryMessenger = flutterEngine.dartExecutor.binaryMessenger
-        MethodChannel(binaryMessenger, "dev.maartje.agixt/background_service").apply {
+        MethodChannel(binaryMessenger, "dev.agixt.agixt/background_service").apply {
             setMethodCallHandler { method, result ->
                 if (method.method == "startService") {
                     val callbackRawHandle = method.arguments as Long
@@ -59,7 +59,7 @@ class MainActivity: FlutterActivity() {
             }
         }
 
-        MethodChannel(binaryMessenger, "dev.maartje.agixt/app_retain").apply {
+        MethodChannel(binaryMessenger, "dev.agixt.agixt/app_retain").apply {
             setMethodCallHandler { method, result ->
                 if (method.method == "sendToBackground") {
                     moveTaskToBack(true)

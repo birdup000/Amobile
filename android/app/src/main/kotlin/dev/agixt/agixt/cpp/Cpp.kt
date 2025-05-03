@@ -1,4 +1,4 @@
-package dev.maartje.agixt.cpp
+package dev.agixt.agixt.cpp
 
 object Cpp {
 
