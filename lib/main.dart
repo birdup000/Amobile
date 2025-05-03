@@ -130,7 +130,14 @@ class _AppState extends State<App> {
       theme: ThemeData(
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
+        brightness: Brightness.light,
       ),
+      darkTheme: ThemeData(
+        primarySwatch: Colors.blue,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+        brightness: Brightness.dark,
+      ),
+      themeMode: ThemeMode.system,
       home: _isLoading
           ? const Scaffold(
               body: Center(
