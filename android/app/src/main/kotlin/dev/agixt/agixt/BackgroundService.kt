@@ -9,14 +9,21 @@ import androidx.core.content.ContextCompat
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.embedding.engine.dart.DartExecutor
 import io.flutter.view.FlutterCallbackInformation
-import io.flutter.view.FlutterMain
+import io.flutter.embedding.engine.loader.FlutterLoader
 
 class BackgroundService : Service(), LifecycleDetector.Listener {
 
     private var flutterEngine: FlutterEngine? = null
+    private val flutterLoader = FlutterLoader()
 
     override fun onCreate() {
         super.onCreate()
+
+        // Initialize FlutterLoader if it hasn't been initialized yet
+        if (!flutterLoader.initialized()) {
+            flutterLoader.startInitialization(applicationContext)
+            flutterLoader.ensureInitializationComplete(applicationContext, null)
+        }
 
         val notification = Notifications.buildForegroundNotification(this)
         startForeground(Notifications.NOTIFICATION_ID_BACKGROUND_SERVICE, notification)
@@ -65,7 +72,7 @@ class BackgroundService : Service(), LifecycleDetector.Listener {
                 engine.dartExecutor.executeDartCallback(
                     DartExecutor.DartCallback(
                         assets,
-                        FlutterMain.findAppBundlePath(),
+                        flutterLoader.findAppBundlePath(),
                         callbackInformation
                     )
                 )
