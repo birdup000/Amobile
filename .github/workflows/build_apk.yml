@@ -37,6 +37,50 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
+      
+      - name: Clone FFmpeg Kit Repository
+        run: |
+          git clone --branch flutter_3.29_standard https://github.com/nightmarefsm/ffmpeg-kit-new.git /tmp/ffmpeg-kit-new
+          
+      - name: Setup FFmpeg Build Environment
+        run: |
+          apt-get update && apt-get install -y \
+            build-essential \
+            pkg-config \
+            cmake \
+            ninja-build \
+            python3 \
+            automake \
+            libtool \
+            texinfo \
+            nasm \
+            yasm
+      
+      - name: Build FFmpeg Libraries
+        run: |
+          cd /tmp/ffmpeg-kit-new
+          # Navigate to android build script directory
+          cd android
+          # Copy the pre-built libraries into the Flutter project
+          mkdir -p /workspaces/mobile/android/app/libs
+          # Build for the required architectures or use pre-built if available
+          # This may need to be adjusted based on the repository structure
+          ./gradlew copyNativeLibraries
+          cp -r build/ffmpeg-kit/* /workspaces/mobile/android/app/libs/
+          
+      - name: Setup Local FFmpeg Maven Repository
+        run: |
+          cd /tmp/ffmpeg-kit-new/flutter/flutter
+          # Copy the Flutter plugin into a local directory
+          mkdir -p /workspaces/mobile/local_plugins/ffmpeg_kit_flutter
+          cp -r * /workspaces/mobile/local_plugins/ffmpeg_kit_flutter/
+          
+          # Update pubspec.yaml to use local path
+          sed -i 's|ffmpeg_kit_flutter:.*|ffmpeg_kit_flutter:\n    path: ./local_plugins/ffmpeg_kit_flutter|g' /workspaces/mobile/pubspec.yaml
+          
+          # Update Android build.gradle to use local libraries
+          echo "flatDir { dirs '/workspaces/mobile/android/app/libs' }" >> /workspaces/mobile/android/build.gradle
+      
       - name: Git Safe Directory
         run: |
             git config --global --add safe.directory /usr/local/flutter && \
