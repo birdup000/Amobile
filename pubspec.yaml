@@ -138,14 +138,3 @@ flutter_launcher_icons:
   macos:
     generate: true
     image_path: "assets/logo/icon.png"
-
-# Add dependency override to solve FFmpeg conflict
-dependency_overrides:
-  # Override platform interface to ensure consistency
-  ffmpeg_kit_flutter_platform_interface: ^0.2.1
-  # Remove the git dependency as it conflicts with ffmpeg_kit_flutter_new
-  # ffmpeg_kit_flutter:
-  #   git:
-  #     url: https://github.com/nightmarefsm/ffmpeg-kit-new
-  #     ref: flutter_3.29_standard
-  #     path: flutter/flutter

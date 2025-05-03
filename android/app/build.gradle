@@ -68,7 +68,17 @@ flutter {
 
 dependencies {
   coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.2.2'
-  // FFmpeg dependencies will be handled by ffmpeg_kit_flutter_new Flutter package
+  // Add the dummy FFmpeg dependency directly
+  implementation 'com.arthenica:ffmpeg-kit-https:6.0-2.LTS'
+  
+  // Exclude transitive FFmpeg dependencies from other packages
+  configurations.all {
+    exclude group: 'com.arthenica', module: 'ffmpeg-kit-min'
+    exclude group: 'com.arthenica', module: 'ffmpeg-kit-min-gpl'
+    exclude group: 'com.arthenica', module: 'ffmpeg-kit-audio'
+    exclude group: 'com.arthenica', module: 'ffmpeg-kit-full'
+    exclude group: 'com.arthenica', module: 'ffmpeg-kit-full-gpl'
+  }
 }
 
 subprojects {
