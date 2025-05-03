@@ -38,7 +38,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
       - name: Git Safe Directory
-        run: git config --global --add safe.directory *
+        run: git config --global --add safe.directory /
       - name: Install dependencies
         run: flutter pub get
       - name: Run tests
