@@ -62,8 +62,8 @@ flutter {
 
 dependencies {
   coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.2.2'
-  // Use GitHub/JitPack version instead of Arthenica repository
-  implementation 'com.github.tanersener:ffmpeg-kit-android-https:6.0-2'
+  // Use official Arthenica Maven artifact for FFmpeg Kit HTTPS
+  implementation 'com.arthenica:ffmpeg-kit-android-https:6.0.LTS'
   // Commented out original dependency that's causing issues
   // implementation 'com.arthenica:ffmpeg-kit-https:6.0-2.LTS'
 }
