@@ -62,7 +62,7 @@ dependencies:
   chaleno: ^0.0.8
   flutter_appauth: ^6.0.2
   # speech_to_text provides native speech recognition functionality
-  speech_to_text: ^6.6.0
+  speech_to_text: ^7.0.2  # Upgrading to latest version that supports Flutter v2 embedding
   # flutter_sound for audio recording (doesn't rely on ffmpeg)
   flutter_sound: ^9.2.13
 
