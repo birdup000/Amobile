@@ -34,7 +34,7 @@ android {
         applicationId = "dev.agixt.agixt"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = 24 // needed for ffmpeg
+        minSdk = 24 // minimum SDK version for speech_to_text
         targetSdk = 34
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -62,10 +62,7 @@ flutter {
 
 dependencies {
   coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.2.2'
-  // Use official Arthenica Maven artifact for FFmpeg Kit HTTPS
-  implementation 'com.arthenica:ffmpeg-kit-android-https:6.0.LTS'
-  // Commented out original dependency that's causing issues
-  // implementation 'com.arthenica:ffmpeg-kit-https:6.0-2.LTS'
+  // FFmpeg dependencies have been removed as we now use native speech recognition
 }
 
 subprojects {
