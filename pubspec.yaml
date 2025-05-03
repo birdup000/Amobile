@@ -62,8 +62,8 @@ dependencies:
   chaleno: ^0.0.8
   whisper_ggml: ^1.3.0
   flutter_appauth: ^6.0.2
-  # Using ffmpeg_kit_flutter_new to match whisper_ggml's requirements
-  ffmpeg_kit_flutter_new: ^1.1.0
+  # Use ffmpeg_kit_flutter_full_gpl which is compatible with whisper_ggml
+  ffmpeg_kit_flutter_full_gpl: ^6.0.3
 
 dev_dependencies:
   flutter_test:

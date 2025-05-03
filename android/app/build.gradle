@@ -62,8 +62,7 @@ flutter {
 
 dependencies {
   coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.2.2'
-  
-  // Remove any explicit ffmpeg implementations since they'll be provided by the Flutter plugin
+  // FFmpeg dependencies will be handled by ffmpeg_kit_flutter_new Flutter package
 }
 
 subprojects {
