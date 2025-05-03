@@ -1,20 +1,10 @@
 allprojects {
     repositories {
         google()
-        mavenCentral()
-        // Use jcenter() for FFmpeg packages
-        jcenter()
-        // Add JitPack as primary source for FFmpeg Kit
+        mavenCentral() // Ensure Maven Central is checked first
+        jcenter() // Keep for potential older dependencies, though deprecated
         maven { url 'https://jitpack.io' }
-        // Keep Arthenica repo as fallback but with updated URL
-        maven { 
-            url 'https://repo1.maven.org/maven2/' 
-            content {
-                // This repository only for FFmpeg fallbacks
-                includeGroup "com.arthenica"
-            }
-        }
-        // Original Arthenica URL as last resort
+        // Keep Arthenica repo as a fallback
         maven { url 'https://repo.arthenica.com/repository/ffmpeg-kit/' }
     }
 
