@@ -42,6 +42,11 @@ android {
         ndk {
             abiFilters  'armeabi-v7a', 'arm64-v8a'
         }
+        
+        // Add the redirect scheme for flutter_appauth
+        manifestPlaceholders = [
+            'appAuthRedirectScheme': 'agixt'
+        ]
     }
 
     buildTypes {
