@@ -8,7 +8,7 @@ import 'package:flutter/foundation.dart';
 class AIService {
   static final AIService singleton = AIService._internal();
   final BluetoothManager _bluetoothManager = BluetoothManager.singleton;
-  final WhisperService _whisperService = WhisperService();
+  WhisperService? _whisperService;
   
   bool _isProcessing = false;
   Timer? _micTimer;
@@ -17,7 +17,14 @@ class AIService {
     return singleton;
   }
   
-  AIService._internal();
+  AIService._internal() {
+    _initWhisperService();
+  }
+  
+  // Initialize the WhisperService using the factory method
+  Future<void> _initWhisperService() async {
+    _whisperService = await WhisperService.service();
+  }
   
   // Handle side button press to activate voice input and AI response
   Future<void> handleSideButtonPress() async {
@@ -56,8 +63,13 @@ class AIService {
       // Show processing message
       await _showProcessingMessage();
       
+      // Initialize WhisperService if not already initialized
+      if (_whisperService == null) {
+        await _initWhisperService();
+      }
+      
       // Get transcription from Whisper service
-      final transcription = await _whisperService.getTranscription();
+      final transcription = await _whisperService?.getTranscription();
       
       if (transcription != null && transcription.isNotEmpty) {
         // Send message to AGiXT API
