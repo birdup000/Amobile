@@ -4,13 +4,14 @@ on:
     branches:
       - main
 jobs:
-  release_tag:
-    name: Create Release
+  apk:
+    name: Build APK
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
+    env:
+      APP_NAME: AGiXT
+      AGIXT_SERVER: https://api.agixt.dev
+      APP_URI: https://agixt.dev
     outputs:
-      upload_url: ${{ steps.create_release.outputs.upload_url }}
       new_tag: ${{ steps.next_tag_version.outputs.new_tag }}
     steps:
       - name: Checkout code
@@ -23,26 +24,8 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           release_branches: main
-      - name: Create Release
-        id: create_release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ steps.next_tag_version.outputs.new_tag }}
-          name: ${{ steps.next_tag_version.outputs.new_tag }}
-          draft: false
-          prerelease: false
-          generate_release_notes: true
-          token: ${{ secrets.GITHUB_TOKEN }}
-  apk:
-    name: Build APK
-    runs-on: ubuntu-latest
-    env:
-      APP_NAME: AGiXT
-      AGIXT_SERVER: https://api.agixt.dev
-      APP_URI: https://agixt.dev
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+          create_annotated_tag: true
+          dry_run: true
       - name: Set up JDK
         uses: actions/setup-java@v3
         with:
@@ -66,18 +49,29 @@ jobs:
       - name: Build Android release
         run: |
           flutter build apk --release
-      - name: Upload APK
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-release.apk
           path: build/app/outputs/flutter-apk/app-release.apk
+
   release:
-    name: Release APK
-    needs: [apk, release_tag]
+    name: Create Release and Upload APK
+    needs: [apk]
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.apk.outputs.new_tag }}
+          name: ${{ needs.apk.outputs.new_tag }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          token: ${{ secrets.GITHUB_TOKEN }}
       - name: Download APK from build
         uses: actions/download-artifact@v4
         with:
@@ -85,7 +79,7 @@ jobs:
       - name: Upload Release APK
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ needs.release_tag.outputs.new_tag }}
+          tag_name: ${{ needs.apk.outputs.new_tag }}
           files: app-release.apk
           token: ${{ secrets.GITHUB_TOKEN }}
-          name: ${{ needs.release_tag.outputs.new_tag }}
+          name: ${{ needs.apk.outputs.new_tag }}
