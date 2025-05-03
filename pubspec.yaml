@@ -142,9 +142,9 @@ flutter_launcher_icons:
 
 # Add dependency override to solve FFmpeg conflict
 dependency_overrides:
-  # Use a more reliable fork for FFmpeg dependencies
-  ffmpeg_kit_flutter_full_gpl:
+  # Use the nightmarefsm repository as suggested
+  ffmpeg_kit_flutter:
     git:
-      url: https://github.com/Mostafa-Makhlouf/ffmpeg-kit.git
+      url: https://github.com/nightmarefsm/ffmpeg-kit-new
+      ref: flutter_3.29_standard
       path: flutter/flutter
-      ref: main

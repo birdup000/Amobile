@@ -28,58 +28,62 @@ jobs:
           release_branches: main
           create_annotated_tag: true
           dry_run: true
+      
+      - name: Setup Maven
+        run: |
+          apt-get update && apt-get install -y maven
+      
       - name: Setup FFmpeg repositories cache
         uses: actions/cache@v3
         with:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+            ~/.m2/repository
+          key: ${{ runner.os }}-gradle-maven-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
+            ${{ runner.os }}-gradle-maven-
             ${{ runner.os }}-gradle-
+      
+      - name: Create libs directory
+        run: mkdir -p ./android/app/libs
       
       - name: Clone FFmpeg Kit Repository
         run: |
           git clone --branch flutter_3.29_standard https://github.com/nightmarefsm/ffmpeg-kit-new.git /tmp/ffmpeg-kit-new
-          
-      - name: Setup FFmpeg Build Environment
-        run: |
-          apt-get update && apt-get install -y \
-            build-essential \
-            pkg-config \
-            cmake \
-            ninja-build \
-            python3 \
-            automake \
-            libtool \
-            texinfo \
-            nasm \
-            yasm
       
-      - name: Build FFmpeg Libraries
+      - name: Download or extract FFmpeg AAR
         run: |
-          cd /tmp/ffmpeg-kit-new
-          # Navigate to android build script directory
-          cd android
-          # Copy the pre-built libraries into the Flutter project
-          mkdir -p /workspaces/mobile/android/app/libs
-          # Build for the required architectures or use pre-built if available
-          # This may need to be adjusted based on the repository structure
-          ./gradlew copyNativeLibraries
-          cp -r build/ffmpeg-kit/* /workspaces/mobile/android/app/libs/
+          # Try to find the AAR in the cloned repository
+          find /tmp/ffmpeg-kit-new -name "ffmpeg-kit-https-6.0-2.LTS.aar" -exec cp {} ./android/app/libs/ \;
           
-      - name: Setup Local FFmpeg Maven Repository
+          # If AAR wasn't found, you might need to host the file somewhere and download it
+          if [ ! -f "./android/app/libs/ffmpeg-kit-https-6.0-2.LTS.aar" ]; then
+            echo "AAR not found in repository, downloading from external source..."
+            # Replace with actual URL where you've hosted the AAR file
+            # curl -L -o ./android/app/libs/ffmpeg-kit-https-6.0-2.LTS.aar https://your-server.com/ffmpeg-kit-https-6.0-2.LTS.aar
+            echo "NOTE: You will need to add the AAR file to your repository or provide a download URL"
+          fi
+      
+      - name: Install AAR to local Maven repository
         run: |
-          cd /tmp/ffmpeg-kit-new/flutter/flutter
-          # Copy the Flutter plugin into a local directory
-          mkdir -p /workspaces/mobile/local_plugins/ffmpeg_kit_flutter
-          cp -r * /workspaces/mobile/local_plugins/ffmpeg_kit_flutter/
-          
-          # Update pubspec.yaml to use local path
-          sed -i 's|ffmpeg_kit_flutter:.*|ffmpeg_kit_flutter:\n    path: ./local_plugins/ffmpeg_kit_flutter|g' /workspaces/mobile/pubspec.yaml
-          
-          # Update Android build.gradle to use local libraries
-          echo "flatDir { dirs '/workspaces/mobile/android/app/libs' }" >> /workspaces/mobile/android/build.gradle
+          if [ -f "./android/app/libs/ffmpeg-kit-https-6.0-2.LTS.aar" ]; then
+            mvn install:install-file \
+              -Dfile=./android/app/libs/ffmpeg-kit-https-6.0-2.LTS.aar \
+              -DgroupId=com.arthenica \
+              -DartifactId=ffmpeg-kit-https \
+              -Dversion=6.0-2.LTS \
+              -Dpackaging=aar
+              
+            echo "FFmpeg AAR installed to local Maven repository"
+          else
+            echo "WARNING: FFmpeg AAR file not found"
+          fi
+      
+      - name: Update build.gradle for local Maven repository
+        run: |
+          # Ensure the repositories section includes mavenLocal()
+          sed -i '/repositories {/a\\        mavenLocal()' ./android/build.gradle
       
       - name: Git Safe Directory
         run: |
@@ -88,11 +92,14 @@ jobs:
 
       - name: Install dependencies
         run: flutter pub get
+      
       - name: Run tests
         run: flutter test
+      
       - name: Build Android release
         run: |
           flutter build apk --release
+      
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
