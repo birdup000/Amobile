@@ -8,13 +8,7 @@ jobs:
     name: Build APK
     runs-on: ubuntu-latest
     container:
-      # Using a more comprehensive container with Android SDK platforms and NDK pre-installed
-      image: mingc/android-build-box:latest
-      # This image contains:
-      # - Android SDK 29, 30, 31, 32, 33, 34
-      # - Android build tools 32.0.0, 33.0.0, 34.0.0
-      # - Android NDK 25, 26 
-      # - Flutter stable
+      image: joshxt/flutterbuilder:latest
     env:
       APP_NAME: AGiXT
       AGIXT_SERVER: https://api.agixt.dev
