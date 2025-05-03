@@ -1,6 +1,6 @@
 // Service for handling AI communications with AGiXT API
 import 'dart:async';
-import 'package:agixt/models/agixt/auth/chat.dart';
+import 'package:agixt/models/agixt/widgets/agixt_chat.dart';
 import 'package:agixt/services/bluetooth_manager.dart';
 import 'package:agixt/services/whisper.dart';
 import 'package:flutter/foundation.dart';
@@ -9,6 +9,7 @@ class AIService {
   static final AIService singleton = AIService._internal();
   final BluetoothManager _bluetoothManager = BluetoothManager.singleton;
   WhisperService? _whisperService;
+  final AGiXTChatWidget _chatWidget = AGiXTChatWidget();
   
   bool _isProcessing = false;
   Timer? _micTimer;
@@ -91,8 +92,8 @@ class AIService {
       // Show sending message
       await _bluetoothManager.sendText('Sending to AGiXT: "$message"');
       
-      // Get response from AGiXT API
-      final response = await ChatService.sendMessage(message);
+      // Get response using the AGiXTChatWidget
+      final response = await _chatWidget.sendChatMessage(message);
       
       if (response != null && response.isNotEmpty) {
         // Display response on glasses

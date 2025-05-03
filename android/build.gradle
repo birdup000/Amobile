@@ -2,6 +2,9 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+        // Add jcenter and maven.arthenica.com for ffmpeg_kit_flutter_new
+        jcenter()
+        maven { url 'https://maven.arthenica.com' }
     }
 
     subprojects {
