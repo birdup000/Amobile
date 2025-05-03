@@ -68,17 +68,18 @@ flutter {
 
 dependencies {
   coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.2.2'
-  // Add the dummy FFmpeg dependency directly
-  implementation 'com.arthenica:ffmpeg-kit-https:6.0-2.LTS'
-  
-  // Exclude transitive FFmpeg dependencies from other packages
-  configurations.all {
-    exclude group: 'com.arthenica', module: 'ffmpeg-kit-min'
-    exclude group: 'com.arthenica', module: 'ffmpeg-kit-min-gpl'
-    exclude group: 'com.arthenica', module: 'ffmpeg-kit-audio'
-    exclude group: 'com.arthenica', module: 'ffmpeg-kit-full'
-    exclude group: 'com.arthenica', module: 'ffmpeg-kit-full-gpl'
-  }
+  // FFmpeg dependency will be handled by the Flutter plugin now
+  // No need for the dummy implementation anymore
+}
+
+// Tell Gradle to use the correct repositories for FFmpeg dependencies
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+        // Make sure we have jcenter for the FFmpeg libraries
+        jcenter()
+    }
 }
 
 subprojects {
