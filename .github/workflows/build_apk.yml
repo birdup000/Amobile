@@ -34,6 +34,15 @@ jobs:
           release_branches: main
           create_annotated_tag: true
           dry_run: true
+      - name: Setup FFmpeg repositories cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
       - name: Install dependencies
         run: flutter pub get
       - name: Run tests

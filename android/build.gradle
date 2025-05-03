@@ -4,9 +4,8 @@ allprojects {
         mavenCentral()
         // Use jcenter() for FFmpeg packages
         jcenter()
-        // Remove problematic repositories that are causing 401 errors
-        // maven { url 'https://maven.arthenica.com' }
-        // maven { url 'https://maven.pkg.github.com/tanersener/ffmpeg-kit' }
+        // Add the proper ffmpeg-kit repository
+        maven { url 'https://repo.arthenica.com/repository/ffmpeg-kit/' }
         maven { url 'https://jitpack.io' }
     }
 
