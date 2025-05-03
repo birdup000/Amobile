@@ -60,13 +60,11 @@ dependencies:
   csv: ^6.0.0
   fast_csv: ^0.2.11
   chaleno: ^0.0.8
-  whisper_ggml: ^1.3.0
+  # Downgraded to a more compatible version
+  whisper_ggml: ^1.1.1
   flutter_appauth: ^6.0.2
-  # Remove flutter_ffmpeg since its binaries are missing
-  # flutter_ffmpeg: ^0.4.2
-
-  # Add meedu_ffmpeg which is actively maintained
-  meedu_ffmpeg: ^0.1.2
+  # Remove meedu_ffmpeg which won't work
+  # meedu_ffmpeg: ^0.1.2
 
 dev_dependencies:
   flutter_test:
@@ -144,12 +142,9 @@ flutter_launcher_icons:
 
 # Add dependency override to solve FFmpeg conflict
 dependency_overrides:
-  # Remove the GitHub-based overrides that are causing git fetch issues
-  # ffmpeg_kit_flutter_full_gpl:
-  #   git:
-  #     url: https://github.com/Sahad2701/ffmpeg_kit_flutter_full_gpl.git
-  #     ref: flutter-upgrade/remove-v1-embedding
-  # ffmpeg_kit_flutter_new:
-  #   git:
-  #     url: https://github.com/hansvdam/ffmpeg_kit_flutter_new.git
-  #     ref: main
+  # Use a more reliable fork for FFmpeg dependencies
+  ffmpeg_kit_flutter_full_gpl:
+    git:
+      url: https://github.com/Mostafa-Makhlouf/ffmpeg-kit.git
+      path: flutter/flutter
+      ref: main

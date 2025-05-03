@@ -2,21 +2,9 @@ allprojects {
     repositories {
         google()
         mavenCentral()
-        jcenter() // Though deprecated, kept for legacy dependencies
         maven { url 'https://jitpack.io' }
-        // Add this repository for meedu_ffmpeg
-        maven { url "https://maven.aliyun.com/repository/public" }
+        jcenter() // Though deprecated, keeping for legacy dependencies
     }
-
-    // Remove dependency substitution rules for ffmpeg-kit packages
-    // configurations.all {
-    //    resolutionStrategy {
-    //        dependencySubstitution {
-    //            ...
-    //        }
-    //        ...
-    //    }
-    // }
 
     subprojects {
         afterEvaluate { project ->
