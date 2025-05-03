@@ -13,10 +13,10 @@ pluginManagement {
         google()
         mavenCentral()
         gradlePluginPortal()
-        // Remove problematic repositories
-        // maven { url 'https://maven.arthenica.com' }
-        // maven { url 'https://maven.pkg.github.com/tanersener/ffmpeg-kit' }
+        // Add JitPack as a source for plugins
         maven { url 'https://jitpack.io' }
+        // Add Maven Central as fallback
+        maven { url 'https://repo1.maven.org/maven2/' }
     }
 }
 
