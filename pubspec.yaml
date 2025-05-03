@@ -138,3 +138,10 @@ flutter_launcher_icons:
   macos:
     generate: true
     image_path: "assets/logo/icon.png"
+
+# Add dependency override to solve FFmpeg conflict
+dependency_overrides:
+  ffmpeg_kit_flutter_full_gpl:
+    git:
+      url: https://github.com/Sahad2701/ffmpeg_kit_flutter_full_gpl.git
+      ref: flutter-upgrade/remove-v1-embedding
