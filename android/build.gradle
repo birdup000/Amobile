@@ -4,8 +4,12 @@ allprojects {
         mavenCentral() // Ensure Maven Central is checked first
         jcenter() // Keep for potential older dependencies, though deprecated
         maven { url 'https://jitpack.io' }
-        // Keep Arthenica repo as a fallback
-        maven { url 'https://repo.arthenica.com/repository/ffmpeg-kit/' }
+        // Add local repository before trying to reach arthenica
+        flatDir {
+            dirs "${project.rootDir}/app/libs"
+        }
+        // Keep Arthenica repo as a fallback but commented out since it's unavailable
+        // maven { url 'https://repo.arthenica.com/repository/ffmpeg-kit/' }
     }
 
     subprojects {
