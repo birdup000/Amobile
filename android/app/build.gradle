@@ -68,8 +68,8 @@ flutter {
 
 dependencies {
   coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.2.2'
-  // FFmpeg dependency will be handled by the Flutter plugin now
-  // No need for the dummy implementation anymore
+  // FFmpeg dependencies - use the lighter version
+  implementation 'com.arthenica:ffmpeg-kit-min:5.1'
 }
 
 // Tell Gradle to use the correct repositories for FFmpeg dependencies

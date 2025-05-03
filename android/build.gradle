@@ -12,8 +12,8 @@ allprojects {
     // Simplify the resolution strategy
     configurations.all {
         resolutionStrategy {
-            // Just force using our locally installed version
-            force 'com.arthenica:ffmpeg-kit-https:6.0-2.LTS'
+            // Use the minimal FFmpeg version instead of the https version
+            force 'com.arthenica:ffmpeg-kit-min:5.1'
         }
     }
 

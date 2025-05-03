@@ -60,11 +60,10 @@ dependencies:
   csv: ^6.0.0
   fast_csv: ^0.2.11
   chaleno: ^0.0.8
-  # Temporarily commenting out whisper and FFmpeg dependencies
-  # whisper_ggml: ^1.3.0
+  whisper_ggml: ^1.3.0
   flutter_appauth: ^6.0.2
-  # Removing FFmpeg dependency as it's causing build issues
-  # ffmpeg_kit_flutter_full_gpl: 5.1.0
+  # FFmpeg is needed by whisper_ggml, but we'll handle it differently
+  ffmpeg_kit_flutter_min: ^5.1.0
 
 dev_dependencies:
   flutter_test:
