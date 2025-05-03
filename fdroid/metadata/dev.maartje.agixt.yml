@@ -1,0 +1,16 @@
+Categories:
+  - Internet
+License: BSD-2-Clause
+AuthorName: Maartje
+SourceCode: https://github.com/meyskens/agixt
+IssueTracker: https://github.com/meyskens/agixt/issues
+
+AutoName: AGiXT
+Summary: "AGiXT is a dynamic AI Agent Automation Platform.\n"
+Description: |
+  AGiXT is a dynamic AI Agent Automation Platform that seamlessly orchestrates instruction management and complex task execution across diverse AI providers.
+RepoType: git
+Repo: https://github.com/meyskens/agixt.git
+
+AutoUpdateMode: None
+UpdateCheckMode: None
