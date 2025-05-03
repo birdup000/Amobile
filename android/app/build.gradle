@@ -62,6 +62,8 @@ flutter {
 
 dependencies {
   coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.2.2'
+  // Add direct implementation for FFmpeg Kit HTTPS
+  implementation 'com.arthenica:ffmpeg-kit-https:6.0-2.LTS'
 }
 
 subprojects {
