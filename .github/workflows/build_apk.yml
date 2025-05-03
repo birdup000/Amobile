@@ -45,45 +45,10 @@ jobs:
             ${{ runner.os }}-gradle-maven-
             ${{ runner.os }}-gradle-
       
-      - name: Create libs directory
-        run: mkdir -p ./android/app/libs
-      
-      - name: Clone FFmpeg Kit Repository
+      - name: Run FFmpeg setup script
         run: |
-          git clone --branch flutter_3.29_standard https://github.com/nightmarefsm/ffmpeg-kit-new.git /tmp/ffmpeg-kit-new
-      
-      - name: Download or extract FFmpeg AAR
-        run: |
-          # Try to find the AAR in the cloned repository
-          find /tmp/ffmpeg-kit-new -name "ffmpeg-kit-https-6.0-2.LTS.aar" -exec cp {} ./android/app/libs/ \;
-          
-          # If AAR wasn't found, you might need to host the file somewhere and download it
-          if [ ! -f "./android/app/libs/ffmpeg-kit-https-6.0-2.LTS.aar" ]; then
-            echo "AAR not found in repository, downloading from external source..."
-            # Replace with actual URL where you've hosted the AAR file
-            # curl -L -o ./android/app/libs/ffmpeg-kit-https-6.0-2.LTS.aar https://your-server.com/ffmpeg-kit-https-6.0-2.LTS.aar
-            echo "NOTE: You will need to add the AAR file to your repository or provide a download URL"
-          fi
-      
-      - name: Install AAR to local Maven repository
-        run: |
-          if [ -f "./android/app/libs/ffmpeg-kit-https-6.0-2.LTS.aar" ]; then
-            mvn install:install-file \
-              -Dfile=./android/app/libs/ffmpeg-kit-https-6.0-2.LTS.aar \
-              -DgroupId=com.arthenica \
-              -DartifactId=ffmpeg-kit-https \
-              -Dversion=6.0-2.LTS \
-              -Dpackaging=aar
-              
-            echo "FFmpeg AAR installed to local Maven repository"
-          else
-            echo "WARNING: FFmpeg AAR file not found"
-          fi
-      
-      - name: Update build.gradle for local Maven repository
-        run: |
-          # Ensure the repositories section includes mavenLocal()
-          sed -i '/repositories {/a\\        mavenLocal()' ./android/build.gradle
+          chmod +x ./scripts/setup_ffmpeg.sh
+          ./scripts/setup_ffmpeg.sh
       
       - name: Git Safe Directory
         run: |

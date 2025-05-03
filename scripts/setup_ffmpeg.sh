@@ -19,18 +19,18 @@ GROUP_ID="com.arthenica"
 AAR_FILE="$ARTIFACT_ID-$VERSION.aar"
 AAR_PATH="./android/app/libs/$AAR_FILE"
 
-# Try to download from public forks first
-echo "Attempting to download from public forks..."
-PUBLIC_FORK_URL="https://github.com/nightmarefsm/ffmpeg-kit-new"
+# Create a directory for the fork repository
+echo "Cloning the FFmpeg Kit repository..."
+REPO_DIR="./ffmpeg-kit-clone"
+rm -rf "$REPO_DIR"
+mkdir -p "$REPO_DIR"
 
-if [ ! -d "temp_clone" ]; then
-  echo "Cloning public fork..."
-  git clone --depth 1 --branch flutter_3.29_standard $PUBLIC_FORK_URL temp_clone
-fi
+# Try to clone the repository
+git clone --depth 1 --branch flutter_3.29_standard https://github.com/nightmarefsm/ffmpeg-kit-new.git "$REPO_DIR"
 
 # Try to find the AAR in the cloned repository
 echo "Searching for AAR files in the clone..."
-FOUND_AAR=$(find temp_clone -name "*.aar" -type f | grep -i ffmpeg | head -1)
+FOUND_AAR=$(find "$REPO_DIR" -name "*.aar" -type f | grep -i ffmpeg | head -1)
 
 if [ -n "$FOUND_AAR" ]; then
   echo "Found AAR file: $FOUND_AAR"
@@ -88,29 +88,35 @@ public class FFmpegKit {
   rm -rf $TEMP_DIR
 fi
 
-# Clean up clone directory
-rm -rf temp_clone
+# Verify the AAR file exists
+if [ ! -f "$AAR_PATH" ]; then
+  echo "ERROR: Failed to create or find FFmpeg AAR file at $AAR_PATH"
+  exit 1
+fi
 
 # Install to local Maven repository
-if [ -f "$AAR_PATH" ]; then
-    echo "Installing $AAR_FILE to local Maven repository..."
-    mvn install:install-file \
-        -Dfile="$AAR_PATH" \
-        -DgroupId="$GROUP_ID" \
-        -DartifactId="$ARTIFACT_ID" \
-        -Dversion="$VERSION" \
-        -Dpackaging=aar
-    
-    echo "Installation completed successfully!"
+echo "Installing $AAR_FILE to local Maven repository..."
+mvn install:install-file \
+    -Dfile="$AAR_PATH" \
+    -DgroupId="$GROUP_ID" \
+    -DartifactId="$ARTIFACT_ID" \
+    -Dversion="$VERSION" \
+    -Dpackaging=aar
+
+if [ $? -ne 0 ]; then
+  echo "ERROR: Maven install failed. See above for details."
+  exit 1
 else
-    echo "ERROR: Failed to create or find FFmpeg AAR file."
-    exit 1
+  echo "Installation completed successfully!"
 fi
+
+# Clean up clone directory
+rm -rf "$REPO_DIR"
 
 # Make sure mavenLocal is in android/build.gradle
 if ! grep -q "mavenLocal()" ./android/build.gradle; then
-    echo "Adding mavenLocal() to build.gradle"
-    sed -i '/repositories {/a\\        mavenLocal()' ./android/build.gradle
+  echo "Adding mavenLocal() to build.gradle"
+  sed -i '/repositories {/a\\        mavenLocal()' ./android/build.gradle
 fi
 
 echo "Setting up Flutter dependencies..."
