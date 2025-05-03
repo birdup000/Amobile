@@ -1,22 +1,19 @@
 allprojects {
     repositories {
+        // Keep mavenLocal at the top to ensure it's searched first
+        mavenLocal()
         google()
         mavenCentral()
+        jcenter()
         maven { url 'https://jitpack.io' }
-        jcenter() // Though deprecated, keeping for legacy dependencies
-        mavenLocal() // Add local Maven repository for local dependencies
+        // Remove any reference to private/unavailable repositories
     }
 
-    // Add dependency substitution rules with correct syntax
+    // Simplify the resolution strategy
     configurations.all {
         resolutionStrategy {
-            dependencySubstitution {
-                // Use the correct syntax for dependency substitution
-                substitute(module('com.arthenica:ffmpeg-kit-https:6.0-2.LTS')).using(module('com.github.tanersener:ffmpeg-kit-android-https:v6.0-2.LTS'))
-            }
-            
-            // Force specific versions if needed
-            force 'com.github.tanersener:ffmpeg-kit-android-https:v6.0-2.LTS'
+            // Just force using our locally installed version
+            force 'com.arthenica:ffmpeg-kit-https:6.0-2.LTS'
         }
     }
 
