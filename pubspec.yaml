@@ -145,3 +145,7 @@ dependency_overrides:
     git:
       url: https://github.com/Sahad2701/ffmpeg_kit_flutter_full_gpl.git
       ref: flutter-upgrade/remove-v1-embedding
+  ffmpeg_kit_flutter_new:
+    git:
+      url: https://github.com/hansvdam/ffmpeg_kit_flutter_new.git
+      ref: main

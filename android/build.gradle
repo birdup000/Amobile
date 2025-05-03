@@ -13,6 +13,22 @@ allprojects {
         // maven { url 'https://repo.arthenica.com/repository/ffmpeg-kit/' }
     }
 
+    // Add dependency substitution rules
+    configurations.all {
+        resolutionStrategy {
+            dependencySubstitution {
+                // Replace missing Arthenica dependencies with GitHub-hosted versions
+                substitute module('com.arthenica:ffmpeg-kit-full-gpl') using module('com.github.tanersener:ffmpeg-kit-android-full-gpl:v6.0-2.LTS')
+                substitute module('com.arthenica:ffmpeg-kit-https:6.0-2.LTS') using module('com.github.tanersener:ffmpeg-kit-android-https:v6.0-2.LTS')
+                substitute module('com.arthenica:ffmpeg-kit-full-gpl:6.0-2') using module('com.github.tanersener:ffmpeg-kit-android-full-gpl:v6.0-2.LTS')
+            }
+            
+            // Force specific versions of transitive dependencies if needed
+            force 'com.github.tanersener:ffmpeg-kit-android-https:v6.0-2.LTS'
+            force 'com.github.tanersener:ffmpeg-kit-android-full-gpl:v6.0-2.LTS'
+        }
+    }
+
     subprojects {
         afterEvaluate { project ->
             if (project.hasProperty('android')) {
