@@ -62,12 +62,12 @@ dependencies:
   chaleno: ^0.0.8
   whisper_ggml: ^1.1.1
   flutter_appauth: ^6.0.2
-  # Using a specific version of ffmpeg_kit_flutter with proper repository reference
+  # Using a specific git tag for ffmpeg_kit_flutter
   ffmpeg_kit_flutter:
-    version: ^5.1.0
     git:
       url: https://github.com/arthenica/ffmpeg-kit
       path: flutter/flutter
+      ref: v6.0.LTS # Use the latest LTS tag
 
 dev_dependencies:
   flutter_test:
