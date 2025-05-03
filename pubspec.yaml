@@ -62,8 +62,11 @@ dependencies:
   chaleno: ^0.0.8
   whisper_ggml: ^1.1.1
   flutter_appauth: ^6.0.2
-  # Use the official ffmpeg_kit_flutter LTS package from pub.dev
-  ffmpeg_kit_flutter: ^6.0.3-LTS
+  # Using the GitHub fork via JitPack instead of official package
+  ffmpeg_kit_flutter:
+    git:
+      url: https://github.com/nightmarefsm/ffmpeg-kit-new.git
+      ref: main
 
 dev_dependencies:
   flutter_test:

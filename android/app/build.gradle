@@ -63,8 +63,8 @@ flutter {
 dependencies {
   coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.2.2'
   
-  // Use local AAR file for ffmpeg-kit (make sure to place the AAR file in the libs directory)
-  implementation fileTree(dir: 'libs', include: ['*.aar', '*.jar'])
+  // Remove explicit ffmpeg-kit implementation as it will be provided by the Flutter plugin
+  // via the Git dependency in pubspec.yaml
 }
 
 subprojects {

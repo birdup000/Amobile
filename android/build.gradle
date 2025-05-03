@@ -1,14 +1,15 @@
 allprojects {
     repositories {
-        google()
-        mavenCentral() // Ensure Maven Central is checked first
-        jcenter() // Keep for potential older dependencies, though deprecated
+        // Place JitPack repository first to ensure it's checked before others
         maven { url 'https://jitpack.io' }
-        // Add local repository before trying to reach arthenica
-        flatDir {
-            dirs "${project.rootDir}/app/libs"
-        }
-        // Keep Arthenica repo as a fallback but commented out since it's unavailable
+        google()
+        mavenCentral()
+        jcenter() // Though deprecated, kept for legacy dependencies
+        // Comment out the flatDir repo as we're using a direct Git dependency
+        // flatDir {
+        //     dirs "${project.rootDir}/app/libs"
+        // }
+        // Keep Arthenica repo commented out since it's unavailable
         // maven { url 'https://repo.arthenica.com/repository/ffmpeg-kit/' }
     }
 
