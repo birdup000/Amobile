@@ -42,6 +42,11 @@ android {
         ndk {
             abiFilters  'armeabi-v7a', 'arm64-v8a'
         }
+        
+        // Add the OAuth redirect scheme to match the scheme in AndroidManifest.xml
+        manifestPlaceholders = [
+            appAuthRedirectScheme: "agixt"
+        ]
     }
 
     buildTypes {
