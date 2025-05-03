@@ -54,7 +54,7 @@ jobs:
           flutter-version: '3.x'
           channel: 'stable'
       - name: Accept Android SDK Licenses
-        run: yes | sdkmanager --licenses
+        run: yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses
       - name: Install dependencies
         run: flutter pub get
       - name: Run tests
