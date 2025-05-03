@@ -62,9 +62,10 @@ flutter {
 
 dependencies {
   coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.2.2'
-  // Removed explicit ffmpeg-kit dependency - Flutter plugin will add it based on pubspec.yaml
-  // implementation 'com.github.nightmarefsm:ffmpeg-kit-new:v6.0.LTS' 
-  // implementation 'com.arthenica:ffmpeg-kit-android-https:6.0.LTS'
+  // Use official Arthenica Maven artifact for FFmpeg Kit HTTPS
+  implementation files('libs/ffmpeg-kit-full-6.0-2.LTS.aar')
+  // Commented out original dependency that's causing issues
+  // implementation 'com.arthenica:ffmpeg-kit-https:6.0-2.LTS'
 }
 
 subprojects {
