@@ -47,5 +47,26 @@
 		<true/>
 		<key>UIStatusBarHidden</key>
 		<false/>
+		<!-- URL Scheme for OAuth Authentication -->
+		<key>CFBundleURLTypes</key>
+		<array>
+			<dict>
+				<key>CFBundleTypeRole</key>
+				<string>Editor</string>
+				<key>CFBundleURLName</key>
+				<string>dev.agixt.app</string>
+				<key>CFBundleURLSchemes</key>
+				<array>
+					<string>agixt</string>
+				</array>
+			</dict>
+		</array>
+		<!-- Bluetooth permissions -->
+		<key>NSBluetoothAlwaysUsageDescription</key>
+		<string>This app uses Bluetooth to connect to Even Realities glasses.</string>
+		<key>NSBluetoothPeripheralUsageDescription</key>
+		<string>This app uses Bluetooth to connect to Even Realities glasses.</string>
+		<key>NSCalendarsUsageDescription</key>
+		<string>Access to calendar is needed to add events and display them.</string>
 	</dict>
 </plist>

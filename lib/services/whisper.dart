@@ -10,6 +10,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 import 'package:whisper_ggml/whisper_ggml.dart';
 import 'package:web_socket_client/web_socket_client.dart';
+import 'package:http/http.dart' as http;
+import 'package:agixt/models/agixt/auth/auth.dart';
 
 abstract class WhisperService {
   static Future<WhisperService> service() async {
@@ -23,6 +25,36 @@ abstract class WhisperService {
   }
 
   Future<String> transcribe(Uint8List voiceData);
+  
+  // Method for AGiXT AI integration that returns a simulated transcription
+  Future<String?> getTranscription() async {
+    try {
+      // For the initial implementation, we'll simulate a successful transcription
+      // In a real implementation, we would:
+      // 1. Capture audio from the glasses
+      // 2. Process the audio data
+      // 3. Send to a speech-to-text service (OpenAI Whisper API or AGiXT's endpoint)
+      
+      // Simulate processing time
+      await Future.delayed(const Duration(seconds: 2));
+      
+      // Return dummy transcription for testing
+      return "What's on my schedule for today?";
+      
+      /* 
+      // Below is how you would implement the actual transcription with captured audio:
+      
+      final audioData = await captureAudioFromGlasses();
+      if (audioData != null && audioData.isNotEmpty) {
+        return await transcribe(audioData);
+      }
+      return null;
+      */
+    } catch (e) {
+      debugPrint('Error in WhisperService.getTranscription: $e');
+      return null;
+    }
+  }
 }
 
 class WhisperLocalService implements WhisperService {
@@ -94,6 +126,21 @@ class WhisperLocalService implements WhisperService {
     await File(wavPath).delete();
 
     return result!.transcription.text;
+  }
+  
+  @override
+  Future<String?> getTranscription() async {
+    // Call the implementation from the abstract class
+    try {
+      // Simulate processing time
+      await Future.delayed(const Duration(seconds: 2));
+      
+      // Return dummy transcription for testing
+      return "What's on my schedule for today?";
+    } catch (e) {
+      debugPrint('Error in WhisperLocalService.getTranscription: $e');
+      return null;
+    }
   }
 }
 
@@ -198,6 +245,21 @@ class WhisperRemoteService implements WhisperService {
     var text = transcription.text;
 
     return text;
+  }
+  
+  @override
+  Future<String?> getTranscription() async {
+    // Call the implementation from the abstract class
+    try {
+      // Simulate processing time
+      await Future.delayed(const Duration(seconds: 2));
+      
+      // Return dummy transcription for testing
+      return "What's on my schedule for today?";
+    } catch (e) {
+      debugPrint('Error in WhisperRemoteService.getTranscription: $e');
+      return null;
+    }
   }
 
   Future<void> transcribeLive(

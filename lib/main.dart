@@ -2,10 +2,13 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
 
+import 'package:agixt/models/agixt/auth/auth.dart';
 import 'package:agixt/models/agixt/calendar.dart';
 import 'package:agixt/models/agixt/checklist.dart';
 import 'package:agixt/models/agixt/daily.dart';
 import 'package:agixt/models/agixt/stop.dart';
+import 'package:agixt/screens/auth/login_screen.dart';
+import 'package:agixt/screens/auth/profile_screen.dart';
 import 'package:agixt/services/bluetooth_manager.dart';
 import 'package:agixt/services/stops_manager.dart';
 import 'package:agixt/utils/ui_perfs.dart';
@@ -19,8 +22,20 @@ import 'screens/home_screen.dart';
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
 
+// Environment variables with defaults
+const String APP_NAME = String.fromEnvironment('APP_NAME', defaultValue: 'AGiXT');
+const String AGIXT_SERVER = String.fromEnvironment('AGIXT_SERVER', defaultValue: 'https://api.agixt.dev');
+const String APP_URI = String.fromEnvironment('APP_URI', defaultValue: 'https://agixt.dev');
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize AuthService with environment variables
+  AuthService.init(
+    serverUrl: AGIXT_SERVER,
+    appUri: APP_URI,
+    appName: APP_NAME,
+  );
 
   flutterLocalNotificationsPlugin.initialize(
     InitializationSettings(
@@ -83,15 +98,53 @@ class AppRetainWidget extends StatelessWidget {
   }
 }
 
-class App extends StatelessWidget {
+class App extends StatefulWidget {
   const App({super.key});
+
+  @override
+  State<App> createState() => _AppState();
+}
+
+class _AppState extends State<App> {
+  bool _isLoggedIn = false;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkLoginStatus();
+  }
+
+  Future<void> _checkLoginStatus() async {
+    final isLoggedIn = await AuthService.isLoggedIn();
+    setState(() {
+      _isLoggedIn = isLoggedIn;
+      _isLoading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: AppRetainWidget(
-        child: HomePage(),
+      title: APP_NAME,
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
+      home: _isLoading
+          ? const Scaffold(
+              body: Center(
+                child: CircularProgressIndicator(),
+              ),
+            )
+          : AppRetainWidget(
+              child: _isLoggedIn ? const HomePage() : const LoginScreen(),
+            ),
+      routes: {
+        '/home': (context) => const HomePage(),
+        '/login': (context) => const LoginScreen(),
+        '/profile': (context) => const ProfileScreen(),
+      },
     );
   }
 }

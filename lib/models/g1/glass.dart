@@ -7,6 +7,9 @@ import '../../utils/constants.dart';
 
 enum GlassSide { left, right }
 
+// Define type for side button press callback
+typedef SideButtonCallback = void Function();
+
 class Glass {
   final String name;
   final GlassSide side;
@@ -19,6 +22,9 @@ class Glass {
   StreamSubscription<List<int>>? notificationSubscription;
   Timer? heartbeatTimer;
   int heartbeatSeq = 0;
+
+  // Callback function for when side button is pressed
+  SideButtonCallback? onSideButtonPress;
 
   get isConnected => device.isConnected;
 
@@ -86,10 +92,17 @@ class Glass {
     //String hexData =
     //    data.map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ');
     //debugPrint('[$side Glass] Received data: $hexData');
+    
+    // Check for side button press event
+    if (data.length >= 2 && data[0] == Commands.BUTTON_PRESS) {
+      debugPrint('[$side Glass] Side button pressed');
+      // Call the callback if it's defined
+      if (onSideButtonPress != null) {
+        onSideButtonPress!();
+      }
+    }
+    
     // Call the receive handler function
-
-    //replies.add(Uint8List.fromList(data));
-
     await reciever.receiveHandler(side, data);
   }
 
