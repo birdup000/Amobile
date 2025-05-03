@@ -2,13 +2,12 @@ allprojects {
     repositories {
         google()
         mavenCentral()
-        // Add jcenter and maven.arthenica.com for ffmpeg_kit_flutter_new
+        // Use jcenter() for FFmpeg packages
         jcenter()
-        maven { url 'https://maven.arthenica.com' }
-        // Add JitPack as alternative repository
+        // Remove problematic repositories that are causing 401 errors
+        // maven { url 'https://maven.arthenica.com' }
+        // maven { url 'https://maven.pkg.github.com/tanersener/ffmpeg-kit' }
         maven { url 'https://jitpack.io' }
-        // Add GitHub Packages as another alternative
-        maven { url 'https://maven.pkg.github.com/tanersener/ffmpeg-kit' }
     }
 
     subprojects {

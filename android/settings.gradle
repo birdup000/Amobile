@@ -13,9 +13,10 @@ pluginManagement {
         google()
         mavenCentral()
         gradlePluginPortal()
-        maven { url 'https://maven.arthenica.com' }
+        // Remove problematic repositories
+        // maven { url 'https://maven.arthenica.com' }
+        // maven { url 'https://maven.pkg.github.com/tanersener/ffmpeg-kit' }
         maven { url 'https://jitpack.io' }
-        maven { url 'https://maven.pkg.github.com/tanersener/ffmpeg-kit' }
     }
 }
 
