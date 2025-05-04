@@ -74,30 +74,18 @@ jobs:
 
           # Create the message
           VERSION="${{ steps.next_tag_version.outputs.new_tag }}"
+          ARTIFACT_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           
-          FILE_TO_SEND="build/app/outputs/flutter-apk/app-release.apk"
-          if [ -f "$FILE_TO_SEND" ]; then
-            MESSAGE="✅ Build successful for **${{ env.APP_NAME }}** (branch **$BRANCH_NAME**)\nCommit: **${{ github.sha }}** by ${DISCORD_NAME} "
-            # If the branch is main, include the version
-            if [ "$BRANCH_NAME" == "main" ]; then
-              MESSAGE+="\nVersion **$VERSION** released!"
-            fi
-            # Compress the APK file
-            new_file_name="${{ env.APP_NAME }}-${VERSION}.zip"
-            zip -r "$new_file_name" "$FILE_TO_SEND"
-            echo "Sending APK: $FILE_TO_SEND"
-            curl -H "Content-Type:multipart/form-data" \
-                  -F "file=@$new_file_name" \
-                  -F "content=$MESSAGE" \
-                  "${{ secrets.DISCORD_WEBHOOK }}"
-          else
-            MESSAGE="❌ Build failed for **${{ env.APP_NAME }}** (branch **$BRANCH_NAME**)\nCommit: **${{ github.sha }}** by ${DISCORD_NAME} "
-            echo "APK file not found at: $FILE_TO_SEND"
-            # Send message without file since APK wasn't found
-            curl -H "Content-Type:application/json" \
-                  -d "{\"content\":\"$MESSAGE\\n⚠️ Warning: APK file was not found!\"}" \
-                  "${{ secrets.DISCORD_WEBHOOK }}"
+          MESSAGE="✅ Build successful for **${{ env.APP_NAME }}** (branch **$BRANCH_NAME**)
+Commit: **${{ github.sha }}** by ${DISCORD_NAME}\nDownload the APK here: $ARTIFACT_URL"
+          
+          if [ "$BRANCH_NAME" == "main" ]; then
+            MESSAGE+="\nVersion **$VERSION** released!"
           fi
+
+          curl -H "Content-Type:application/json" \
+                -d "{\"content\":\"$MESSAGE\"}" \
+                "${{ secrets.DISCORD_WEBHOOK }}"
 
   release:
     name: Create Release and Upload APK
