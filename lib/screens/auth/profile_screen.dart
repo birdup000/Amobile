@@ -94,7 +94,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const SizedBox(height: 20),
                   
                   // User name and email
-                  if (_firstName != null && _lastName != null && _firstName!.isNotEmpty && _lastName!.isNotEmpty) {
+                  if (_firstName != null && _lastName != null && _firstName!.isNotEmpty && _lastName!.isNotEmpty) ...[
                     Text(
                       '${_firstName!} ${_lastName!}',
                       style: const TextStyle(
@@ -103,7 +103,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                  }
+                  ],
                   
                   Text(
                     _email ?? 'User',

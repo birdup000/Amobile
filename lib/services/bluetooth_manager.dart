@@ -44,6 +44,17 @@ class BluetoothManager {
     );
 
     notificationListener!.startListening();
+    
+    // Set up method channel handler for displayTranscription
+    const MethodChannel channel = MethodChannel('dev.agixt.agixt/bluetooth');
+    channel.setMethodCallHandler((call) async {
+      if (call.method == 'displayTranscription') {
+        final String transcription = call.arguments['display_transcription'] as String;
+        await _displayTranscriptionOnGlasses(transcription);
+        return true;
+      }
+      return null;
+    });
   }
 
   AGiXTDashboard agixtDashboard = AGiXTDashboard();
@@ -560,5 +571,26 @@ class BluetoothManager {
     // for an unknown issue the microphone will not close when sent to the left side
     // to work around this we send the command to the right side only
     await rightGlass!.sendData([Commands.OPEN_MIC, subCommand]);
+  }
+  
+  // Display transcription on glasses before sending to AI assistant
+  Future<void> _displayTranscriptionOnGlasses(String transcription) async {
+    if (!isConnected) {
+      debugPrint('Cannot display transcription: Glasses not connected');
+      return;
+    }
+    
+    debugPrint('Displaying transcription on glasses: $transcription');
+    
+    // Format the text to show it's a transcription
+    String displayText = "Transcription: $transcription";
+    
+    // Send the transcription to the glasses display
+    await sendText(displayText, delay: const Duration(seconds: 3));
+    
+    // The text will remain on the glasses for the duration specified in the delay
+    // After which the AI assistant processing will begin (handled by Swift code)
+    
+    debugPrint('Transcription displayed on glasses, AI assistant will process shortly');
   }
 }

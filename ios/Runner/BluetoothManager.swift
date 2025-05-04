@@ -2,7 +2,7 @@ import CoreBluetooth
 import Flutter
 
 class BluetoothManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
-    static let shared = BluetoothManager(channel: FlutterMethodChannel())
+    static let shared = BluetoothManager(channel: FlutterMethodChannel(name: "dev.agixt.agixt/bluetooth", binaryMessenger: FlutterBinaryMessengerRelay.shared))
     
     var centralManager: CBCentralManager!
     var pairedDevices: [String: (CBPeripheral?, CBPeripheral?)] = [:]

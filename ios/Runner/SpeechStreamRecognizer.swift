@@ -135,12 +135,19 @@ class SpeechStreamRecognizer {
     }
     
     func stopRecognition() {
-
         print("stopRecognition-----self.lastRecognizedText-------\(self.lastRecognizedText)------cacheString----------\(cacheString)---")
         self.lastRecognizedText += cacheString
-
+        
+        // First display the transcription on the glasses
         DispatchQueue.main.async {
-            BluetoothManager.shared.blueSpeechSink?(["script": self.lastRecognizedText])
+            // Show transcription on glasses display first
+            let transcriptionDict: [String: Any] = ["display_transcription": self.lastRecognizedText]
+            BluetoothManager.shared.channel.invokeMethod("displayTranscription", arguments: transcriptionDict)
+            
+            // Then after a delay, send the transcription to the AI assistant
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                BluetoothManager.shared.blueSpeechSink?(["script": self.lastRecognizedText])
+            }
         }
         
         recognitionTask?.cancel()
