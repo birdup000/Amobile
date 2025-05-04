@@ -10,6 +10,7 @@ import dev.agixt.agixt.cpp.Cpp
 import android.content.Context
 import android.content.Intent
 import android.app.Service
+import android.content.ContextWrapper
 
 class MainActivity: FlutterActivity() {
     private val CHANNEL = "dev.agixt.agixt/channel"
