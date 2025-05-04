@@ -154,6 +154,37 @@ class _AppState extends State<App> {
     }, onError: (error) {
       debugPrint('Error handling deep link: $error');
     });
+    
+    // Set up the method channel for OAuth callback from native code
+    const platform = MethodChannel('dev.agixt.agixt/oauth_callback');
+    platform.setMethodCallHandler((call) async {
+      if (call.method == 'handleOAuthCallback') {
+        final args = call.arguments as Map;
+        final token = args['token'] as String?;
+        
+        if (token != null && token.isNotEmpty) {
+          debugPrint('Received JWT token via method channel from native code');
+          await _processJwtToken(token);
+        }
+      } else if (call.method == 'checkPendingToken') {
+        // This method is called by Flutter to check if there's a pending token
+        // No action needed here as we already handle this in native code
+        return null;
+      }
+      return null;
+    });
+    
+    // Check if we have any pending tokens from native code that arrived before Flutter was initialized
+    try {
+      final result = await platform.invokeMethod('checkPendingToken');
+      if (result != null && result is Map && result.containsKey('token')) {
+        final token = result['token'] as String;
+        debugPrint('Retrieved pending JWT token from native code');
+        await _processJwtToken(token);
+      }
+    } catch (e) {
+      debugPrint('Error checking for pending tokens: $e');
+    }
   }
 
   void _handleDeepLink(String link) {
@@ -166,13 +197,26 @@ class _AppState extends State<App> {
       
       if (token != null && token.isNotEmpty) {
         debugPrint('Received JWT token from deep link');
-        // Store JWT token and update login state
-        AuthService.storeJwt(token).then((_) {
-          setState(() {
-            _isLoggedIn = true;
-            _isLoading = false;
-          });
-        });
+        _processJwtToken(token);
+      }
+    }
+  }
+  
+  Future<void> _processJwtToken(String token) async {
+    // Validate the token if necessary
+    bool isTokenValid = true;  // Replace with actual validation if needed
+    
+    if (isTokenValid) {
+      // Store JWT token and update login state
+      await AuthService.storeJwt(token);
+      setState(() {
+        _isLoggedIn = true;
+        _isLoading = false;
+      });
+      
+      // If we're already showing the login screen, navigate to home
+      if (!_isLoggedIn && mounted) {
+        Navigator.of(context).pushReplacementNamed('/home');
       }
     }
   }

@@ -16,10 +16,15 @@ import android.Manifest
 import android.content.pm.PackageManager
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import android.net.Uri
+import android.util.Log
 
 class MainActivity: FlutterActivity() {
     private val CHANNEL = "dev.agixt.agixt/channel"
     private val PERMISSION_REQUEST_CODE = 100
+    private val TAG = "MainActivity"
+    private var methodChannelInitialized = false
+    private var pendingToken: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -27,6 +32,60 @@ class MainActivity: FlutterActivity() {
         
         // Request microphone permission at startup
         requestMicrophonePermission()
+        
+        // Handle intent when app is first launched
+        handleIntent(intent)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleIntent(intent)
+    }
+
+    private fun handleIntent(intent: Intent?) {
+        intent?.let {
+            // Check if the intent is from OAuth callback
+            if (Intent.ACTION_VIEW == it.action) {
+                val uri = it.data
+                if (uri != null && uri.scheme == "agixt" && uri.host == "callback") {
+                    // Extract the JWT token from the URI
+                    val token = uri.getQueryParameter("token")
+                    if (!token.isNullOrEmpty()) {
+                        Log.d(TAG, "OAuth callback received with token")
+                        if (methodChannelInitialized) {
+                            // If Flutter is already initialized, send the token immediately
+                            sendTokenToFlutter(token)
+                        } else {
+                            // Otherwise, store it for later sending once Flutter is initialized
+                            pendingToken = token
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun sendTokenToFlutter(token: String) {
+        val binaryMessenger = flutterEngine?.dartExecutor?.binaryMessenger
+        if (binaryMessenger != null) {
+            MethodChannel(binaryMessenger, "dev.agixt.agixt/oauth_callback").invokeMethod(
+                "handleOAuthCallback",
+                mapOf("token" to token),
+                object : MethodChannel.Result {
+                    override fun success(result: Any?) {
+                        Log.d(TAG, "Token sent to Flutter successfully")
+                    }
+
+                    override fun error(errorCode: String, errorMessage: String?, errorDetails: Any?) {
+                        Log.e(TAG, "Error sending token to Flutter: $errorCode - $errorMessage")
+                    }
+
+                    override fun notImplemented() {
+                        Log.e(TAG, "Method not implemented in Flutter")
+                    }
+                }
+            )
+        }
     }
 
     private fun requestMicrophonePermission() {
@@ -140,6 +199,29 @@ class MainActivity: FlutterActivity() {
                 }
             }
         }
+        
+        // Add a method channel for handling OAuth callback
+        MethodChannel(binaryMessenger, "dev.agixt.agixt/oauth_callback").apply {
+            setMethodCallHandler { method, result ->
+                if (method.method == "checkPendingToken") {
+                    // If there's a pending token from a deep link that was received before Flutter initialized
+                    pendingToken?.let { token ->
+                        result.success(mapOf("token" to token))
+                        pendingToken = null // Clear the token after sending it
+                    } ?: result.success(null)
+                } else {
+                    result.notImplemented()
+                }
+            }
+        }
+        
+        // Mark that the method channels are initialized
+        methodChannelInitialized = true
+        
+        // Check if we have a pending token to send
+        pendingToken?.let { token ->
+            sendTokenToFlutter(token)
+            pendingToken = null
+        }
     }
-
 }
