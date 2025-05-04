@@ -71,8 +71,8 @@ AGiXT supports voice recognition in the following languages:
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/agixt-mobile.git
-cd agixt-mobile
+git clone https://github.com/AGiXT/mobile.git
+cd mobile
 ```
 
 2. Install dependencies:
