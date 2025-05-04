@@ -57,9 +57,7 @@ jobs:
       - name: Send Report to Discord
         if: always()
         run: |
-          # Get build status and branch information
-          BRANCH_NAME=$(echo ${{ github.ref }} | awk -F'/' '{print $NF}')
-          
+          # Map GitHub actor to Discord user
           if [ "${{ github.actor }}" == "Josh-XT" ]; then
             DISCORD_NAME="<@381837595522367488>"
           elif [ "${{ github.actor }}" == "waiscodes" ]; then
@@ -75,17 +73,24 @@ jobs:
           else
             DISCORD_NAME="**${{ github.actor }}**"
           fi
-
-          # Create the message
+          # Get build status and branch information
+          BRANCH_NAME=$(echo ${{ github.ref }} | awk -F'/' '{print $NF}')
           VERSION="${{ steps.next_tag_version.outputs.new_tag }}"
           ARTIFACT_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          
-          MESSAGE="✅ Build successful for **${{ github.repository }}** (branch **$BRANCH_NAME**)\nCommit: **${{ github.sha }}** by ${DISCORD_NAME}\nDownload the APK here: $ARTIFACT_URL"
-          
-          if [ "$BRANCH_NAME" == "main" ]; then
-            MESSAGE+="\nVersion **$VERSION** released!"
+          FILE_PATH="build/app/outputs/flutter-apk/app-release.apk"
+          if [ -f "$FILE_PATH" ]; then
+            FILE_SIZE=$(stat -c%s "$FILE_PATH")
+            if [ $FILE_SIZE -gt 0 ]; then
+              MESSAGE="✅ Build successful for **${{ github.repository }}** (branch **$BRANCH_NAME**)\nCommit: **${{ github.sha }}** by ${DISCORD_NAME}\nDownload the APK here: $ARTIFACT_URL"
+              if [ "$BRANCH_NAME" == "main" ]; then
+                MESSAGE+="\nVersion **$VERSION** released!"
+              fi
+            else
+              MESSAGE="❌ Build failed for **${{ github.repository }}** (branch **$BRANCH_NAME**)\nCommit: **${{ github.sha }}** by ${DISCORD_NAME}\nAPK file is empty or not found."
+            fi
+          else
+            MESSAGE="❌ Build failed for **${{ github.repository }}** (branch **$BRANCH_NAME**)\nCommit: **${{ github.sha }}** by ${DISCORD_NAME}\nAPK file is missing."
           fi
-
           curl -H "Content-Type:application/json" \
                 -d "{\"content\":\"$MESSAGE\"}" \
                 "${{ secrets.DISCORD_WEBHOOK }}"
