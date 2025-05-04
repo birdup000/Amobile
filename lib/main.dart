@@ -13,6 +13,7 @@ import 'package:agixt/screens/wake_word_settings_screen.dart';
 import 'package:agixt/services/ai_service.dart';
 import 'package:agixt/services/bluetooth_manager.dart';
 import 'package:agixt/services/stops_manager.dart';
+import 'package:agixt/services/wake_word_service.dart';
 import 'package:agixt/utils/ui_perfs.dart';
 import 'package:agixt/utils/wake_word_settings.dart';
 import 'package:flutter/material.dart';
@@ -415,6 +416,9 @@ void _handleDeleteAction(String actionId) async {
 }
 
 void _setupWakeWordDetection() {
+  // Initialize the wake word service singleton
+  final wakeWordService = WakeWordService();
+  
   _wakeWordChannel.setMethodCallHandler((call) async {
     if (call.method == 'processVoiceCommand') {
       debugPrint('Wake word detected and voice command received');
@@ -423,10 +427,10 @@ void _setupWakeWordDetection() {
       final Map<dynamic, dynamic> args = call.arguments as Map;
       final String transcription = args['transcription'] as String;
       
-      // Process the voice command using AIService
+      // Process the voice command using our wake word service
       if (transcription.isNotEmpty) {
         debugPrint('Processing voice command: $transcription');
-        await AIService.singleton.processWakeWordCommand(transcription);
+        await wakeWordService.processVoiceCommand(transcription);
       }
     }
     return null;

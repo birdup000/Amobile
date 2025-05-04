@@ -211,7 +211,11 @@ class SpeechStreamRecognizer {
     }
 
     func processTranscription(_ transcription: String) {
-        if transcription.lowercased().contains(wakeWord) {
+        // Convert both transcription and wake word to lowercase for case-insensitive comparison
+        let lowercaseTranscription = transcription.lowercased()
+        let lowercaseWakeWord = wakeWord.lowercased()
+        
+        if lowercaseTranscription.contains(lowercaseWakeWord) {
             triggerAGiXTWorkflow(transcription)
         }
     }
@@ -219,16 +223,25 @@ class SpeechStreamRecognizer {
     private func triggerAGiXTWorkflow(_ transcription: String) {
         print("Wake word detected: \(transcription)")
         
+        // Find wake word position case-insensitively
+        let lowercaseTranscription = transcription.lowercased()
+        let lowercaseWakeWord = wakeWord.lowercased()
+        
+        guard let range = lowercaseTranscription.range(of: lowercaseWakeWord) else {
+            print("Wake word not found in transcription after detection")
+            return
+        }
+        
+        // Calculate the end index in the original string
+        let wakeWordEndIndex = transcription.index(transcription.startIndex, offsetBy: lowercaseTranscription.distance(from: lowercaseTranscription.startIndex, to: range.upperBound))
+        
         // Extract the command after the wake word
-        if let range = transcription.range(of: wakeWord, options: .caseInsensitive) {
-            let commandStart = transcription.index(range.upperBound, offsetBy: 0)
-            let commandText = String(transcription[commandStart...]).trimmingCharacters(in: .whitespacesAndNewlines)
-            
-            // Send command to AGiXT workflow via Flutter method channel
-            DispatchQueue.main.async {
-                let commandDict: [String: Any] = ["transcription": commandText]
-                BluetoothManager.shared.channel.invokeMethod("processVoiceCommand", arguments: commandDict)
-            }
+        let commandText = String(transcription[wakeWordEndIndex...]).trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        // Send command to AGiXT workflow via Flutter method channel
+        DispatchQueue.main.async {
+            let commandDict: [String: Any] = ["transcription": commandText]
+            BluetoothManager.shared.channel.invokeMethod("processVoiceCommand", arguments: commandDict)
         }
     }
     
