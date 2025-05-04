@@ -82,9 +82,12 @@ jobs:
             if [ "$BRANCH_NAME" == "main" ]; then
               MESSAGE+="\nVersion **$VERSION** released!"
             fi
+            # Compress the APK file
+            new_file_name="${{ env.APP_NAME }}-${VERSION}.zip"
+            zip -r "$new_file_name" "$FILE_TO_SEND"
             echo "Sending APK: $FILE_TO_SEND"
             curl -H "Content-Type:multipart/form-data" \
-                  -F "file=@$FILE_TO_SEND" \
+                  -F "file=@$new_file_name" \
                   -F "content=$MESSAGE" \
                   "${{ secrets.DISCORD_WEBHOOK }}"
           else
