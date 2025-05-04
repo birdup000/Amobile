@@ -11,7 +11,10 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   String? _email;
+  String? _firstName;
+  String? _lastName;
   bool _isLoading = true;
+  UserModel? _userModel;
 
   @override
   void initState() {
@@ -24,10 +27,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _isLoading = true;
     });
 
+    // Get stored email as fallback
     final email = await AuthService.getEmail();
     
+    // Try to get full user info from the server
+    final userInfo = await AuthService.getUserInfo();
+    
     setState(() {
-      _email = email;
+      if (userInfo != null) {
+        _userModel = userInfo;
+        _email = userInfo.email;
+        _firstName = userInfo.firstName;
+        _lastName = userInfo.lastName;
+      } else {
+        // If server request fails, use stored email as fallback
+        _email = email;
+      }
       _isLoading = false;
     });
   }
@@ -78,16 +93,79 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   
                   const SizedBox(height: 20),
                   
-                  // User email
+                  // User name and email
+                  if (_firstName != null && _lastName != null && _firstName!.isNotEmpty && _lastName!.isNotEmpty) {
+                    Text(
+                      '${_firstName!} ${_lastName!}',
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                  }
+                  
                   Text(
                     _email ?? 'User',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey[700],
+                      fontStyle: FontStyle.italic,
                     ),
                   ),
                   
-                  const SizedBox(height: 40),
+                  if (_userModel != null) ...[
+                    const SizedBox(height: 20),
+                    const Divider(),
+                    const SizedBox(height: 10),
+                    
+                    // Show user timezone
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.access_time, size: 18, color: Colors.blue),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Timezone: ${_userModel!.timezone}',
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                      ],
+                    ),
+                    
+                    const SizedBox(height: 10),
+                    
+                    // Show token usage  
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.analytics_outlined, size: 18, color: Colors.green),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Text(
+                            'Tokens: ${_userModel!.inputTokens} in / ${_userModel!.outputTokens} out',
+                            style: const TextStyle(fontSize: 14),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    
+                    if (_userModel!.companies.isNotEmpty) ...[
+                      const SizedBox(height: 20),
+                      
+                      // Show primary company
+                      Text(
+                        'Company: ${_userModel!.companies.firstWhere((c) => c.primary, orElse: () => _userModel!.companies.first).name}',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                    
+                    const SizedBox(height: 20),
+                  ] else
+                    const SizedBox(height: 40),
                   
                   // Go to AGiXT button
                   ElevatedButton.icon(
