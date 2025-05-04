@@ -15,6 +15,7 @@ jobs:
       APP_URI: https://agixt.dev
     outputs:
       new_tag: ${{ steps.next_tag_version.outputs.new_tag }}
+      artifact_id: ${{ steps.set_artifact_id.outputs.artifact_id }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -51,9 +52,13 @@ jobs:
           flutter build apk --release
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
+        id: upload_artifact
         with:
           name: app-release.apk
           path: build/app/outputs/flutter-apk/app-release.apk
+      - name: Set artifact ID as output
+        id: set_artifact_id
+        run: echo "artifact_id=${{ steps.upload_artifact.outputs.artifact-id }}" >> $GITHUB_OUTPUT
       - name: Send Report to Discord
         if: always()
         run: |
@@ -76,7 +81,7 @@ jobs:
           # Get build status and branch information
           BRANCH_NAME=$(echo ${{ github.ref }} | awk -F'/' '{print $NF}')
           VERSION="${{ steps.next_tag_version.outputs.new_tag }}"
-          ARTIFACT_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          ARTIFACT_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts/${{ steps.set_artifact_id.outputs.artifact_id }}"
           FILE_PATH="build/app/outputs/flutter-apk/app-release.apk"
           if [ -f "$FILE_PATH" ]; then
             FILE_SIZE=$(stat -c%s "$FILE_PATH")
