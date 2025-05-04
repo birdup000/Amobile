@@ -8,6 +8,8 @@ import io.flutter.plugins.GeneratedPluginRegistrant
 import io.flutter.plugin.common.MethodChannel
 import dev.agixt.agixt.cpp.Cpp
 import android.content.Context
+import android.content.Intent
+import android.app.Service
 
 class MainActivity: FlutterActivity() {
     private val CHANNEL = "dev.agixt.agixt/channel"
