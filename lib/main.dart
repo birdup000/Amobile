@@ -17,6 +17,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:uni_links/uni_links.dart';
 import 'screens/home_screen.dart';
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
@@ -108,11 +109,61 @@ class App extends StatefulWidget {
 class _AppState extends State<App> {
   bool _isLoggedIn = false;
   bool _isLoading = true;
+  StreamSubscription? _deepLinkSubscription;
 
   @override
   void initState() {
     super.initState();
     _checkLoginStatus();
+    _initDeepLinkHandling();
+  }
+
+  @override
+  void dispose() {
+    _deepLinkSubscription?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _initDeepLinkHandling() async {
+    // Handle links that opened the app
+    try {
+      final initialLink = await getInitialLink();
+      if (initialLink != null) {
+        _handleDeepLink(initialLink);
+      }
+    } catch (e) {
+      debugPrint('Error getting initial deep link: $e');
+    }
+
+    // Handle links while app is running
+    _deepLinkSubscription = uriLinkStream.listen((Uri? uri) {
+      if (uri != null) {
+        _handleDeepLink(uri.toString());
+      }
+    }, onError: (error) {
+      debugPrint('Error handling deep link: $error');
+    });
+  }
+
+  void _handleDeepLink(String link) {
+    debugPrint('Received deep link: $link');
+    
+    // Handle the agixt://callback URL format with token
+    if (link.startsWith('agixt://callback')) {
+      Uri uri = Uri.parse(link);
+      String? token = uri.queryParameters['token'];
+      
+      if (token != null && token.isNotEmpty) {
+        debugPrint('Received JWT token from deep link');
+        // Store JWT token and update login state
+        AuthService.storeJwt(token).then((_) {
+          setState(() {
+            _isLoggedIn = true;
+            _isLoading = false;
+          });
+        });
+      }
+    }
   }
 
   Future<void> _checkLoginStatus() async {

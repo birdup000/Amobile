@@ -61,6 +61,7 @@ dependencies:
   fast_csv: ^0.2.11
   chaleno: ^0.0.8
   flutter_appauth: ^6.0.2
+  uni_links: ^0.5.1  # Added for handling deep links
   # speech_to_text provides native speech recognition functionality
   speech_to_text: ^7.0.2  # Upgrading to latest version that supports Flutter v2 embedding
   # flutter_sound for audio recording (doesn't rely on ffmpeg)
