@@ -2,7 +2,7 @@ name: Build and Deploy
 on:
   push:
     branches:
-      - main
+      - '**'
 jobs:
   apk:
     name: Build APK
@@ -28,7 +28,7 @@ jobs:
           release_branches: main
           create_annotated_tag: true
           dry_run: true
-      - name: Setup FFmpeg repositories cache
+      - name: Setup repositories cache
         uses: actions/cache@v3
         with:
           path: |
@@ -104,6 +104,8 @@ jobs:
     name: Create Release and Upload APK
     needs: [apk]
     runs-on: ubuntu-latest
+    # Only run the release job on the main branch
+    if: github.ref == 'refs/heads/main'
     permissions:
       contents: write
     steps:
