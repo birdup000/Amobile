@@ -54,7 +54,52 @@ jobs:
         with:
           name: app-release.apk
           path: build/app/outputs/flutter-apk/app-release.apk
+      - name: Send Report to Discord
+        if: always()
+        run: |
+          # Get build status and branch information
+          BRANCH_NAME=$(echo ${{ github.ref }} | awk -F'/' '{print $NF}')
+          
+          # Map GitHub usernames to Discord IDs
+          if [ "${{ github.actor }}" == "Josh-XT" ]; then
+            DISCORD_NAME="<@381837595522367488>"
+          elif [ "${{ github.actor }}" == "waiscodes" ]; then
+            DISCORD_NAME="<@670762167037067304>"
+          elif [ "${{ github.actor }}" == "birdup000" ]; then
+            DISCORD_NAME="<@856308374567256074>"
+          elif [ "${{ github.actor }}" == "Nick-XT" ]; then
+            DISCORD_NAME="<@381908912951001088>"
+          else
+            DISCORD_NAME="**${{ github.actor }}**"
+          fi
 
+          # Set build status emoji and message
+          if [ "${{ job.status }}" == "success" ]; then
+            STATUS_EMOJI="✅"
+            STATUS_TEXT="Build successful"
+          else
+            STATUS_EMOJI="❌"
+            STATUS_TEXT="Build failed"
+          fi
+
+          # Create the message
+          VERSION="${{ steps.next_tag_version.outputs.new_tag }}"
+          MESSAGE="$STATUS_EMOJI $STATUS_TEXT for **${{ env.APP_NAME }}** v$VERSION (branch **$BRANCH_NAME**)\nCommit: **${{ github.sha }}**\nBy: $DISCORD_NAME"
+          
+          # Only send APK if build succeeded
+          if [ "${{ job.status }}" == "success" ]; then
+            FILE_TO_SEND="build/app/outputs/flutter-apk/app-release.apk"
+            echo "Sending APK: $FILE_TO_SEND"
+            curl -H "Content-Type:multipart/form-data" \
+                  -F "file=@$FILE_TO_SEND" \
+                  -F "content=$MESSAGE" \
+                  "${{ secrets.DISCORD_WEBHOOK }}"
+          else
+            # Just send the message without a file attachment
+            curl -H "Content-Type:application/json" \
+                  -d "{\"content\":\"$MESSAGE\"}" \
+                  "${{ secrets.DISCORD_WEBHOOK }}"
+          fi
   release:
     name: Create Release and Upload APK
     needs: [apk]
