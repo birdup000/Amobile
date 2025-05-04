@@ -1,5 +1,6 @@
 // Models for AGiXT OAuth authentication
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -36,7 +37,8 @@ class OAuthProvider {
 }
 
 class OAuthService {
-  static const String REDIRECT_URI = 'agixt://callback';
+  // Deep link URI for the callback
+  static const String DEEP_LINK_URI = 'agixt://callback';
   static final FlutterAppAuth _appAuth = FlutterAppAuth();
   
   // Fetch available OAuth providers
@@ -66,13 +68,15 @@ class OAuthService {
   // Perform OAuth authentication
   static Future<bool> authenticate(OAuthProvider provider) async {
     try {
-      // Check if PKCE is required
+      // Use a web-based redirect URI for the OAuth flow
+      final redirectUri = '${AuthService.appUri}/user/mobile/${provider.name}';
+      
       if (provider.pkceRequired) {
         // Handle PKCE flow
         final pkceResponse = await _appAuth.authorizeAndExchangeCode(
           AuthorizationTokenRequest(
             provider.clientId,
-            REDIRECT_URI,
+            redirectUri,
             serviceConfiguration: AuthorizationServiceConfiguration(
               authorizationEndpoint: provider.authorize,
               tokenEndpoint: '${AuthService.serverUrl}/v1/oauth/token',
@@ -87,7 +91,7 @@ class OAuthService {
         }
       } else {
         // Launch browser for standard OAuth
-        final loginUrl = Uri.parse('${provider.authorize}?client_id=${provider.clientId}&redirect_uri=$REDIRECT_URI&response_type=code&scope=${Uri.encodeComponent(provider.scopes)}');
+        final loginUrl = Uri.parse('${provider.authorize}?client_id=${provider.clientId}&redirect_uri=${Uri.encodeComponent(redirectUri)}&response_type=code&scope=${Uri.encodeComponent(provider.scopes)}');
         
         if (await canLaunchUrl(loginUrl)) {
           await launchUrl(loginUrl, mode: LaunchMode.externalApplication);
