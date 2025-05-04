@@ -81,8 +81,8 @@ class WakeWordService {
     if (command.isEmpty) return;
     
     try {
-      // Send the command to AGiXT for processing
-      await _aiService.sendChatMessage(command);
+      // Send the command to AGiXT for processing using the correct method
+      await _aiService.processWakeWordCommand(command);
     } catch (e) {
       print('Error processing voice command: $e');
     }

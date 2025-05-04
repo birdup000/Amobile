@@ -13,6 +13,7 @@ import 'package:agixt/screens/wake_word_settings_screen.dart';
 import 'package:agixt/services/ai_service.dart';
 import 'package:agixt/services/bluetooth_manager.dart';
 import 'package:agixt/services/stops_manager.dart';
+import 'package:agixt/services/wake_word_service.dart';
 import 'package:agixt/utils/ui_perfs.dart';
 import 'package:agixt/utils/wake_word_settings.dart';
 import 'package:flutter/material.dart';
@@ -25,9 +26,6 @@ import 'screens/home_screen.dart';
 
 // Wake word detection method channel
 const MethodChannel _wakeWordChannel = MethodChannel('dev.agixt.agixt/wake_word');
-
-// Import our wake word service
-import 'package:agixt/services/wake_word_service.dart';
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
