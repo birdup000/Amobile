@@ -68,6 +68,10 @@ jobs:
             DISCORD_NAME="<@856308374567256074>"
           elif [ "${{ github.actor }}" == "Nick-XT" ]; then
             DISCORD_NAME="<@381908912951001088>"
+          elif [ "${{ github.actor }}" == "rm4453" ]; then
+            DISCORD_NAME="<@1104215954356969512>"
+          elif [ "${{ github.actor }}" == "Luke-XT" ]; then
+            DISCORD_NAME="<@334703813967740938>"
           else
             DISCORD_NAME="**${{ github.actor }}**"
           fi
