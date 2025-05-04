@@ -7,6 +7,7 @@ import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugins.GeneratedPluginRegistrant
 import io.flutter.plugin.common.MethodChannel
 import dev.agixt.agixt.cpp.Cpp
+import android.content.Context
 
 class MainActivity: FlutterActivity() {
     private val CHANNEL = "dev.agixt.agixt/channel"
