@@ -11,6 +11,7 @@ import android.content.Context
 import android.content.Intent
 import android.app.Service
 import android.content.ContextWrapper
+import android.app.ActivityManager
 
 class MainActivity: FlutterActivity() {
     private val CHANNEL = "dev.agixt.agixt/channel"
@@ -80,13 +81,16 @@ class MainActivity: FlutterActivity() {
                 if (method.method == "updateWakeWord") {
                     val newWakeWord = method.arguments as String
                     try {
-                        // Get reference to any running BackgroundService instance
-                        val intent = Intent(this@MainActivity, BackgroundService::class.java)
-                        val service = peekService(intent)
+                        // Check if service is running
+                        val activityManager = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+                        val serviceRunning = activityManager.getRunningServices(Integer.MAX_VALUE)
+                            .any { it.service.className == BackgroundService::class.java.name }
                         
-                        if (service != null) {
-                            // Cast to BackgroundService and update the wake word
-                            (service as BackgroundService).updateWakeWord(newWakeWord)
+                        if (serviceRunning) {
+                            // Service is running, send a broadcast to update the wake word
+                            val intent = Intent("dev.agixt.agixt.UPDATE_WAKE_WORD")
+                            intent.putExtra("wakeWord", newWakeWord)
+                            sendBroadcast(intent)
                             result.success(true)
                         } else {
                             // Service not running yet, store in shared preferences for next start

@@ -18,6 +18,8 @@ import android.os.Handler
 import android.os.Looper
 import android.speech.RecognizerIntent
 import io.flutter.plugin.common.MethodChannel
+import android.content.BroadcastReceiver
+import android.content.IntentFilter
 
 class BackgroundService : Service(), LifecycleDetector.Listener {
 
@@ -25,6 +27,7 @@ class BackgroundService : Service(), LifecycleDetector.Listener {
     private val flutterLoader = FlutterLoader()
     private var speechRecognizer: SpeechRecognizer? = null
     private var wakeWord = "agent" // Default wake word changed to "agent"
+    private lateinit var wakeWordReceiver: BroadcastReceiver
 
     // Method to update the wake word from Flutter
     fun updateWakeWord(newWakeWord: String) {
@@ -51,6 +54,27 @@ class BackgroundService : Service(), LifecycleDetector.Listener {
             Log.i("WakeWord", "Loaded custom wake word: $wakeWord")
         }
 
+        // Register broadcast receiver for wake word updates
+        wakeWordReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                intent?.let {
+                    if (it.action == "dev.agixt.agixt.UPDATE_WAKE_WORD") {
+                        val newWakeWord = it.getStringExtra("wakeWord")
+                        if (!newWakeWord.isNullOrEmpty()) {
+                            updateWakeWord(newWakeWord)
+                            
+                            // Save to shared preferences for persistence
+                            val prefs = getSharedPreferences("dev.agixt.agixt.WakeWordSettings", Context.MODE_PRIVATE)
+                            prefs.edit().putString("wakeWord", newWakeWord).apply()
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Register the receiver
+        registerReceiver(wakeWordReceiver, IntentFilter("dev.agixt.agixt.UPDATE_WAKE_WORD"))
+
         val notification = Notifications.buildForegroundNotification(this)
         startForeground(Notifications.NOTIFICATION_ID_BACKGROUND_SERVICE, notification)
 
@@ -75,6 +99,13 @@ class BackgroundService : Service(), LifecycleDetector.Listener {
     override fun onDestroy() {
         super.onDestroy()
         LifecycleDetector.listener = null
+        
+        // Unregister the broadcast receiver
+        try {
+            unregisterReceiver(wakeWordReceiver)
+        } catch (e: Exception) {
+            Log.e("BackgroundService", "Error unregistering receiver: ${e.message}")
+        }
     }
 
     override fun onBind(intent: Intent): IBinder? = null

@@ -1,134 +1,171 @@
 # AGiXT Mobile
 
-A life planning application that integrates with Even Realities G1 smart glasses, providing an AI-powered assistant experience.
+![AGiXT_New](https://github.com/user-attachments/assets/14a5c1ae-6af8-4de8-a82e-f24ea52da23f)
 
-![AGiXT Logo](assets/icons/agixt.png)
+<p align="center">
+  <b>AI-Powered Assistant for Even Realities G1 Smart Glasses</b>
+</p>
 
-## Overview
+## 📱 Overview
 
-AGiXT Mobile is a Flutter-based companion app designed to enhance the user experience of Even Realities G1 smart glasses. This application bridges the gap between AI-powered planning and wearable technology, offering users a seamless way to interact with their digital assistant through voice commands, display information directly on their glasses, and manage their daily schedules.
+AGiXT Mobile is a cutting-edge Flutter application designed as the perfect companion for Even Realities G1 smart glasses. This app creates a seamless bridge between AI-powered intelligence and wearable technology, empowering users to interact with their digital world through natural voice commands, view real-time information on their glasses display, and manage their digital life effortlessly.
 
-## Features
+## ✨ Key Features
 
 ### 🔄 Bluetooth Connectivity
-- Seamless pairing with Even Realities G1 smart glasses
-- Auto-reconnection to previously paired devices
-- Real-time bi-directional communication with both left and right glasses
+- **Instant Pairing**: One-touch connection with Even Realities G1 smart glasses
+- **Smart Reconnection**: Automatically reconnects to previously paired devices
+- **Dual-Glass Communication**: Real-time bi-directional data exchange with both left and right glasses
+- **Stable Connection**: Maintains reliable connectivity even in challenging environments
 
-### 🎤 Voice Recognition
-- On-device speech recognition for multiple languages
-- Real-time transcription display on glasses
-- Speech-to-text processing that feeds into the AI assistant
+### 🎤 Voice Recognition & AI Assistant
+- **Multi-Language Support**: On-device speech recognition for 14+ languages
+- **Real-Time Transcription**: Instant display of speech-to-text on glasses display
+- **AI-Powered Responses**: Natural language processing to understand and respond to user queries
+- **Context-Aware Assistance**: Remembers conversation history for more relevant interactions
 
-### 📅 Calendar & Planning
-- Integration with device calendars
-- Smart scheduling and event management
-- Display of upcoming events on glasses dashboard
+### 📅 Calendar & Smart Planning
+- **Cross-Platform Integration**: Syncs with Google Calendar, Apple Calendar and other providers
+- **AI-Enhanced Scheduling**: Intelligent event management and conflict resolution
+- **Heads-Up Reminders**: Timely notifications displayed directly on glasses
+- **Voice-Controlled Management**: Create, modify, or cancel events using just your voice
 
-### 📱 Notifications
-- Forward phone notifications to glasses display
-- Filter and prioritize notifications
-- Custom appearance for different notification types
+### 📱 Smart Notifications
+- **Priority Filtering**: Customizable notification importance levels
+- **Contextual Display**: Shows notifications when appropriate based on user activity
+- **Quick Actions**: Respond to messages directly from glasses interface
+- **Focus Modes**: Automatically filter notifications based on current activity or meeting status
 
-### 🌐 Translation
-- Real-time translation between multiple languages
-- Display of both original and translated text
-- Support for over 10 languages including English, Chinese, Japanese, Russian, Korean, Spanish, French, German, Dutch, Norwegian, Danish, Swedish, Finnish, and Italian
+### 🌐 Real-Time Translation
+- **Conversation Mode**: Translate spoken language in real-time during conversations
+- **Text Recognition**: Translate written text viewed through the glasses camera
+- **Offline Support**: Core languages available without internet connection
+- **14+ Languages**: Comprehensive support including English, Chinese, Japanese, Russian, Korean, Spanish, French, German, Dutch, Norwegian, Danish, Swedish, Finnish, and Italian
 
-### 📊 Dashboard
-- Customizable dashboard layouts
-- Time and weather information display
-- Note management system
-- Task and checklist tracking
+### 📊 Customizable Dashboard
+- **Modular Widgets**: Arrange information cards based on personal preference
+- **At-a-Glance Info**: Time, weather, calendar, tasks, and more
+- **Voice Note System**: Capture and display thoughts and reminders
+- **Task Tracking**: Manage to-do lists directly on your glasses
 
-## Supported Languages
+### 🔋 Battery Optimization
+- **Power-Saving Modes**: Intelligent adjustment based on usage patterns
+- **Battery Monitoring**: Real-time status of both mobile device and glasses
+- **Usage Analytics**: Insights into battery consumption by feature
 
-AGiXT supports voice recognition in the following languages:
-- English (US)
-- Chinese
-- Japanese
-- Russian
-- Korean
-- Spanish
-- French
-- German
-- Dutch
-- Norwegian
-- Danish
-- Swedish
-- Finnish
-- Italian
+## 🌍 Supported Languages
 
-## Getting Started
+AGiXT supports voice recognition, command processing, and translation in:
 
-### Prerequisites
-- Flutter SDK ^3.5.4
-- iOS 13+ for iOS deployment
-- Android API level 16+ for Android deployment
-- Even Realities G1 smart glasses for full functionality
+| Language | Voice Recognition | Translation | Command Support |
+|----------|:----------------:|:-----------:|:---------------:|
+| English (US) | ✅ | ✅ | ✅ |
+| Chinese | ✅ | ✅ | ✅ |
+| Japanese | ✅ | ✅ | ✅ |
+| Russian | ✅ | ✅ | ✅ |
+| Korean | ✅ | ✅ | ✅ |
+| Spanish | ✅ | ✅ | ✅ |
+| French | ✅ | ✅ | ✅ |
+| German | ✅ | ✅ | ✅ |
+| Dutch | ✅ | ✅ | ✅ |
+| Norwegian | ✅ | ✅ | ✅ |
+| Danish | ✅ | ✅ | ✅ |
+| Swedish | ✅ | ✅ | ✅ |
+| Finnish | ✅ | ✅ | ✅ |
+| Italian | ✅ | ✅ | ✅ |
+
+## 🚀 Getting Started
+
+### System Requirements
+- **Flutter SDK**: ^3.5.4
+- **iOS**: 13.0 or newer
+- **Android**: API level 21+ (Android 5.0+)
+- **Hardware**: Even Realities G1 smart glasses for full functionality
+- **Bluetooth**: 5.0+ recommended for optimal performance
 
 ### Installation
 
-1. Clone the repository:
+1. **Clone the repository**:
 ```bash
 git clone https://github.com/AGiXT/mobile.git
 cd mobile
 ```
 
-2. Install dependencies:
+2. **Install dependencies**:
 ```bash
 flutter pub get
 ```
 
-3. Run the application:
+3. **Run the application**:
 ```bash
 flutter run
 ```
 
-## Development
+### Connecting to Even Realities G1 Glasses
+
+1. **Power on** your G1 smart glasses
+2. **Open AGiXT Mobile** and navigate to the connection screen
+3. **Enable Bluetooth** if not already active
+4. **Scan for devices** and select your G1 glasses from the list
+5. **Follow on-screen pairing instructions** to complete the setup
+6. **Verify connection** by checking the status indicator in the app
+
+## 💻 Development
 
 ### Project Structure
 - `lib/`: Main source code
   - `main.dart`: Application entry point
-  - `models/`: Data models
-  - `screens/`: UI screens
-  - `services/`: Business logic and services
-  - `utils/`: Utility functions
+  - `models/`: Data models for app state and business logic
+  - `screens/`: UI screens and navigation
+  - `services/`: Core services (Bluetooth, voice recognition, etc.)
+  - `utils/`: Helper functions and utilities
   - `widgets/`: Reusable UI components
-- `ios/`: iOS-specific code including native Swift implementations
-- `android/`: Android-specific code
-- `assets/`: Images, icons, and other static resources
+- `ios/`: iOS-specific native code (Swift)
+- `android/`: Android-specific native code (Kotlin/Java)
+- `assets/`: Static resources (images, icons, fonts, etc.)
+- `test/`: Unit and integration tests
 
 ### Key Components
 
-#### Bluetooth Manager
-The heart of the application, responsible for scanning, connecting, and communicating with the G1 glasses.
+#### Bluetooth Connection Manager
+Advanced connection handling for reliable communication with Even Realities G1 glasses, with automatic reconnection and error recovery strategies.
 
-#### Speech Recognition
-Implemented natively in Swift for iOS, provides real-time speech-to-text capabilities with support for multiple languages.
+#### Multi-Language Speech Recognition
+On-device speech processing with real-time feedback and minimal latency, optimized for the G1 glasses ecosystem.
 
-#### Background Services
-Ensures continuous connectivity with glasses and processes notifications even when the app is in the background.
+#### Background Service Architecture
+Maintains critical functionality even when the app is minimized, ensuring continuous glasses connectivity and timely notifications.
 
-## Usage
+#### State Management
+Reactive programming model that ensures UI consistency across app and glasses displays.
 
-1. **Pair with G1 Glasses**: Navigate to the settings and scan for nearby G1 glasses
-2. **Voice Commands**: Tap the microphone button and speak to activate voice recognition
-3. **Dashboard Management**: Customize what information appears on your glasses display
-4. **Calendar Integration**: Connect your calendar to see events directly on your glasses
+## 📖 Usage Examples
 
-## Privacy & Security
+### Voice Commands
 
-- Speech recognition is performed on-device for enhanced privacy
-- Data transmission between the app and glasses is secured
-- User preferences and settings are stored locally
+- **"Hey AGiXT, what's my schedule today?"** - View today's calendar events
+- **"Take a note: pick up groceries after work"** - Create a new reminder
+- **"Translate 'Where is the train station?' to Japanese"** - Get instant translations
+- **"Show me the weather forecast"** - Display weather information
+- **"Read my latest messages"** - Review recent notifications
 
-## License
+### Gesture Controls
 
-This project is licensed under the [LICENSE](LICENSE) file in the repository.
+The app also supports the G1 glasses' gesture recognition for hands-free interaction:
+- **Swipe right/left**: Navigate between dashboard cards
+- **Double tap**: Select or activate current item
+- **Swipe up/down**: Scroll through content
 
-## Acknowledgments
+## 🔒 Privacy & Security
 
-- Even Realities for the G1 smart glasses platform
-- Flutter team for the amazing cross-platform framework
-- All contributors who have helped build and improve AGiXT
+- **Local Processing**: Primary speech recognition performed on-device
+- **Encrypted Communication**: Secure data transfer between app and glasses
+- **Opt-in Cloud Features**: Advanced AI features available with transparent data usage
+- **Privacy Controls**: Granular permissions and data sharing options
+- **Regular Audits**: Continuous security assessment and improvements
+
+## 📬 Contact & Support
+
+- **GitHub Issues**: For bug reports and feature requests
+- **Discord**: Join our community at [AGiXT Discord](https://discord.gg/AGiXT)
+- **Documentation**: [AGiXT Docs](https://AGiXT.github.io/docs)
