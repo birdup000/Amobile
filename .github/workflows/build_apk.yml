@@ -78,6 +78,10 @@ jobs:
           FILE_TO_SEND="build/app/outputs/flutter-apk/app-release.apk"
           if [ -f "$FILE_TO_SEND" ]; then
             MESSAGE="✅ Build successful for **${{ env.APP_NAME }}** (branch **$BRANCH_NAME**)\nCommit: **${{ github.sha }}** by ${DISCORD_NAME} "
+            # If the branch is main, include the version
+            if [ "$BRANCH_NAME" == "main" ]; then
+              MESSAGE+="\nVersion **$VERSION** released!"
+            fi
             echo "Sending APK: $FILE_TO_SEND"
             curl -H "Content-Type:multipart/form-data" \
                   -F "file=@$FILE_TO_SEND" \
