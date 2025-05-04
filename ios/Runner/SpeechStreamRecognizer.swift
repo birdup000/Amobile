@@ -117,19 +117,17 @@ class SpeechStreamRecognizer {
             if let error = error {
                 print("SpeechRecognizer Recognition error: \(error)")
             } else if let result = result {
-                let currentTranscription = result.bestTranscription.formattedString
-                self.processTranscription(currentTranscription)
+                let transcription = result.bestTranscription.formattedString
+                self.processTranscription(transcription)
                 
-                let currentTranscription = result.bestTranscription
                 if lastTranscription == nil {
-                    cacheString = currentTranscription.formattedString
+                    cacheString = result.bestTranscription.formattedString
                 } else {
-                    
-                    if (currentTranscription.segments.count < lastTranscription?.segments.count ?? 1 || currentTranscription.segments.count == 1) {
+                    if (result.bestTranscription.segments.count < lastTranscription?.segments.count ?? 1 || result.bestTranscription.segments.count == 1) {
                         self.lastRecognizedText += cacheString
                         cacheString = ""
                     } else {
-                        cacheString = currentTranscription.formattedString
+                        cacheString = result.bestTranscription.formattedString
                     }
                 }
                 
@@ -203,7 +201,31 @@ class SpeechStreamRecognizer {
 
     private func triggerAGiXTWorkflow(_ transcription: String) {
         print("Wake word detected: \(transcription)")
-        // Logic to send transcription to AGiXT workflow
+        
+        // Extract the command after the wake word
+        if let range = transcription.range(of: wakeWord, options: .caseInsensitive) {
+            let commandStart = transcription.index(range.upperBound, offsetBy: 0)
+            let commandText = String(transcription[commandStart...]).trimmingCharacters(in: .whitespacesAndNewlines)
+            
+            // Send command to AGiXT workflow via Flutter method channel
+            DispatchQueue.main.async {
+                let commandDict: [String: Any] = ["transcription": commandText]
+                BluetoothManager.shared.channel.invokeMethod("processVoiceCommand", arguments: commandDict)
+            }
+        }
+    }
+    
+    // Method to automatically start wake word detection when app starts
+    func autoStartWakeWordDetection() {
+        // Start continuous listening for wake word
+        startWakeWordDetection()
+        
+        // Setup timer to periodically restart recognition if it stops
+        Timer.scheduledTimer(withTimeInterval: 60.0, repeats: true) { [weak self] _ in
+            if self?.recognitionTask == nil {
+                self?.startWakeWordDetection()
+            }
+        }
     }
 }
 
