@@ -17,7 +17,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:uni_links/uni_links.dart';
+import 'package:app_links/app_links.dart';
 import 'screens/home_screen.dart';
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
@@ -110,6 +110,7 @@ class _AppState extends State<App> {
   bool _isLoggedIn = false;
   bool _isLoading = true;
   StreamSubscription? _deepLinkSubscription;
+  final _appLinks = AppLinks();
 
   @override
   void initState() {
@@ -127,19 +128,17 @@ class _AppState extends State<App> {
   Future<void> _initDeepLinkHandling() async {
     // Handle links that opened the app
     try {
-      final initialLink = await getInitialLink();
-      if (initialLink != null) {
-        _handleDeepLink(initialLink);
+      final initialUri = await _appLinks.getInitialAppLink();
+      if (initialUri != null) {
+        _handleDeepLink(initialUri.toString());
       }
     } catch (e) {
       debugPrint('Error getting initial deep link: $e');
     }
 
     // Handle links while app is running
-    _deepLinkSubscription = uriLinkStream.listen((Uri? uri) {
-      if (uri != null) {
-        _handleDeepLink(uri.toString());
-      }
+    _deepLinkSubscription = _appLinks.uriLinkStream.listen((Uri uri) {
+      _handleDeepLink(uri.toString());
     }, onError: (error) {
       debugPrint('Error handling deep link: $error');
     });
