@@ -5,6 +5,7 @@ import 'package:agixt/screens/settings/notifications_screen.dart';
 import 'package:agixt/screens/settings/traewelling_screen.dart';
 import 'package:agixt/screens/settings/ui_settings.dart';
 import 'package:agixt/screens/settings/whisper_screen.dart';
+import 'package:agixt/screens/wake_word_settings_screen.dart';
 import 'package:agixt/widgets/about_dialog.dart';
 import 'package:flutter/material.dart';
 
@@ -83,6 +84,23 @@ class SettingsPage extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => WhisperSettingsPage()),
+              );
+            },
+          ),
+          // Add Wake Word Settings option
+          ListTile(
+            title: Row(
+              children: [
+                Icon(Icons.record_voice_over),
+                SizedBox(width: 10),
+                Text('Wake Word Settings'),
+              ],
+            ),
+            trailing: Icon(Icons.chevron_right),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const WakeWordSettingsScreen()),
               );
             },
           ),

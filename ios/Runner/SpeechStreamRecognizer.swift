@@ -37,7 +37,17 @@ class SpeechStreamRecognizer {
     private var lastTranscription: SFTranscription? // cache to make contrast between near results
     private var cacheString = "" // cache stream recognized formattedString
     
-    private let wakeWord = "agixt"
+    private var wakeWord = "agent" // Changed default wake word to "agent"
+    
+    // Method to update the wake word
+    func updateWakeWord(_ newWakeWord: String) {
+        if !newWakeWord.isEmpty {
+            print("Updating wake word from '\(wakeWord)' to '\(newWakeWord)'")
+            wakeWord = newWakeWord
+            // Save to UserDefaults for persistence
+            UserDefaults.standard.set(newWakeWord, forKey: "AGiXTWakeWord")
+        }
+    }
     
     enum RecognizerError: Error {
         case nilRecognizer
@@ -57,6 +67,13 @@ class SpeechStreamRecognizer {
     
     private init() {
         dateFormatter.dateFormat = "HH:mm:ss.SSS"
+        
+        // Load custom wake word from UserDefaults if available
+        if let savedWakeWord = UserDefaults.standard.string(forKey: "AGiXTWakeWord"), !savedWakeWord.isEmpty {
+            wakeWord = savedWakeWord
+            print("Loaded custom wake word: \(wakeWord)")
+        }
+        
         if #available(iOS 13.0, *) {
             Task {
                 do {

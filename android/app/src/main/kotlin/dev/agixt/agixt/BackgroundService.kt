@@ -24,7 +24,15 @@ class BackgroundService : Service(), LifecycleDetector.Listener {
     private var flutterEngine: FlutterEngine? = null
     private val flutterLoader = FlutterLoader()
     private var speechRecognizer: SpeechRecognizer? = null
-    private val wakeWord = "agixt"
+    private var wakeWord = "agent" // Default wake word changed to "agent"
+
+    // Method to update the wake word from Flutter
+    fun updateWakeWord(newWakeWord: String) {
+        if (newWakeWord.isNotEmpty()) {
+            Log.i("WakeWord", "Updating wake word from '$wakeWord' to '$newWakeWord'")
+            wakeWord = newWakeWord
+        }
+    }
 
     override fun onCreate() {
         super.onCreate()
@@ -33,6 +41,14 @@ class BackgroundService : Service(), LifecycleDetector.Listener {
         if (!flutterLoader.initialized()) {
             flutterLoader.startInitialization(applicationContext)
             flutterLoader.ensureInitializationComplete(applicationContext, null)
+        }
+
+        // Load custom wake word from shared preferences if available
+        val prefs = getSharedPreferences("dev.agixt.agixt.WakeWordSettings", Context.MODE_PRIVATE)
+        val savedWakeWord = prefs.getString("wakeWord", null)
+        if (!savedWakeWord.isNullOrEmpty()) {
+            wakeWord = savedWakeWord
+            Log.i("WakeWord", "Loaded custom wake word: $wakeWord")
         }
 
         val notification = Notifications.buildForegroundNotification(this)

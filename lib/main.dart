@@ -9,10 +9,12 @@ import 'package:agixt/models/agixt/daily.dart';
 import 'package:agixt/models/agixt/stop.dart';
 import 'package:agixt/screens/auth/login_screen.dart';
 import 'package:agixt/screens/auth/profile_screen.dart';
+import 'package:agixt/screens/wake_word_settings_screen.dart';
 import 'package:agixt/services/ai_service.dart';
 import 'package:agixt/services/bluetooth_manager.dart';
 import 'package:agixt/services/stops_manager.dart';
 import 'package:agixt/utils/ui_perfs.dart';
+import 'package:agixt/utils/wake_word_settings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
@@ -67,6 +69,9 @@ void main() async {
 
   await BluetoothManager.singleton.initialize();
   BluetoothManager.singleton.attemptReconnectFromStorage();
+  
+  // Initialize wake word settings
+  await WakeWordSettings.singleton.initialize();
 
   var channel = const MethodChannel('dev.agixt.agixt/background_service');
   var callbackHandle = PluginUtilities.getCallbackHandle(backgroundMain);
@@ -208,6 +213,7 @@ class _AppState extends State<App> {
         '/home': (context) => const HomePage(),
         '/login': (context) => const LoginScreen(),
         '/profile': (context) => const ProfileScreen(),
+        '/wake_word_settings': (context) => const WakeWordSettingsScreen(),
       },
     );
   }
