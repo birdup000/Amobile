@@ -240,8 +240,16 @@ class BackgroundService : Service(), LifecycleDetector.Listener {
     private fun triggerAGiXTWorkflow(transcription: String) {
         Log.i("WakeWord", "Wake word detected: $transcription")
         
+        // Improved wake word detection - find the index case-insensitively
+        val wakeWordIndex = transcription.lowercase().indexOf(wakeWord.lowercase())
+        
+        if (wakeWordIndex == -1) {
+            Log.e("WakeWord", "Wake word not found in transcription after detection: $transcription")
+            return
+        }
+        
         // Extract the command after the wake word
-        val commandText = transcription.substring(transcription.indexOf(wakeWord, ignoreCase = true) + wakeWord.length).trim()
+        val commandText = transcription.substring(wakeWordIndex + wakeWord.length).trim()
         
         // Use MethodChannel to communicate with Flutter
         flutterEngine?.let { engine ->

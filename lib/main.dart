@@ -26,6 +26,9 @@ import 'screens/home_screen.dart';
 // Wake word detection method channel
 const MethodChannel _wakeWordChannel = MethodChannel('dev.agixt.agixt/wake_word');
 
+// Import our wake word service
+import 'package:agixt/services/wake_word_service.dart';
+
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
 
@@ -415,6 +418,9 @@ void _handleDeleteAction(String actionId) async {
 }
 
 void _setupWakeWordDetection() {
+  // Initialize the wake word service singleton
+  final wakeWordService = WakeWordService();
+  
   _wakeWordChannel.setMethodCallHandler((call) async {
     if (call.method == 'processVoiceCommand') {
       debugPrint('Wake word detected and voice command received');
@@ -423,10 +429,10 @@ void _setupWakeWordDetection() {
       final Map<dynamic, dynamic> args = call.arguments as Map;
       final String transcription = args['transcription'] as String;
       
-      // Process the voice command using AIService
+      // Process the voice command using our wake word service
       if (transcription.isNotEmpty) {
         debugPrint('Processing voice command: $transcription');
-        await AIService.singleton.processWakeWordCommand(transcription);
+        await wakeWordService.processVoiceCommand(transcription);
       }
     }
     return null;
