@@ -37,6 +37,18 @@ class SpeechStreamRecognizer {
     private var lastTranscription: SFTranscription? // cache to make contrast between near results
     private var cacheString = "" // cache stream recognized formattedString
     
+    private var wakeWord = "agent" // Changed default wake word to "agent"
+    
+    // Method to update the wake word
+    func updateWakeWord(_ newWakeWord: String) {
+        if !newWakeWord.isEmpty {
+            print("Updating wake word from '\(wakeWord)' to '\(newWakeWord)'")
+            wakeWord = newWakeWord
+            // Save to UserDefaults for persistence
+            UserDefaults.standard.set(newWakeWord, forKey: "AGiXTWakeWord")
+        }
+    }
+    
     enum RecognizerError: Error {
         case nilRecognizer
         case notAuthorizedToRecognize
@@ -55,6 +67,13 @@ class SpeechStreamRecognizer {
     
     private init() {
         dateFormatter.dateFormat = "HH:mm:ss.SSS"
+        
+        // Load custom wake word from UserDefaults if available
+        if let savedWakeWord = UserDefaults.standard.string(forKey: "AGiXTWakeWord"), !savedWakeWord.isEmpty {
+            wakeWord = savedWakeWord
+            print("Loaded custom wake word: \(wakeWord)")
+        }
+        
         if #available(iOS 13.0, *) {
             Task {
                 do {
@@ -115,17 +134,17 @@ class SpeechStreamRecognizer {
             if let error = error {
                 print("SpeechRecognizer Recognition error: \(error)")
             } else if let result = result {
-                    
-                let currentTranscription = result.bestTranscription
+                let transcription = result.bestTranscription.formattedString
+                self.processTranscription(transcription)
+                
                 if lastTranscription == nil {
-                    cacheString = currentTranscription.formattedString
+                    cacheString = result.bestTranscription.formattedString
                 } else {
-                    
-                    if (currentTranscription.segments.count < lastTranscription?.segments.count ?? 1 || currentTranscription.segments.count == 1) {
+                    if (result.bestTranscription.segments.count < lastTranscription?.segments.count ?? 1 || result.bestTranscription.segments.count == 1) {
                         self.lastRecognizedText += cacheString
                         cacheString = ""
                     } else {
-                        cacheString = currentTranscription.formattedString
+                        cacheString = result.bestTranscription.formattedString
                     }
                 }
                 
@@ -183,6 +202,45 @@ class SpeechStreamRecognizer {
                 recognitionRequest.append(audioBuffer)
             } else {
                 print("Failed to get pointer to audio data")
+            }
+        }
+    }
+    
+    func startWakeWordDetection() {
+        startRecognition(identifier: "EN")
+    }
+
+    func processTranscription(_ transcription: String) {
+        if transcription.lowercased().contains(wakeWord) {
+            triggerAGiXTWorkflow(transcription)
+        }
+    }
+
+    private func triggerAGiXTWorkflow(_ transcription: String) {
+        print("Wake word detected: \(transcription)")
+        
+        // Extract the command after the wake word
+        if let range = transcription.range(of: wakeWord, options: .caseInsensitive) {
+            let commandStart = transcription.index(range.upperBound, offsetBy: 0)
+            let commandText = String(transcription[commandStart...]).trimmingCharacters(in: .whitespacesAndNewlines)
+            
+            // Send command to AGiXT workflow via Flutter method channel
+            DispatchQueue.main.async {
+                let commandDict: [String: Any] = ["transcription": commandText]
+                BluetoothManager.shared.channel.invokeMethod("processVoiceCommand", arguments: commandDict)
+            }
+        }
+    }
+    
+    // Method to automatically start wake word detection when app starts
+    func autoStartWakeWordDetection() {
+        // Start continuous listening for wake word
+        startWakeWordDetection()
+        
+        // Setup timer to periodically restart recognition if it stops
+        Timer.scheduledTimer(withTimeInterval: 60.0, repeats: true) { [weak self] _ in
+            if self?.recognitionTask == nil {
+                self?.startWakeWordDetection()
             }
         }
     }

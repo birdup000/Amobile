@@ -69,6 +69,35 @@ class MainActivity: FlutterActivity() {
                 }
             }
         }
+        
+        // Add a new method channel for wake word customization
+        MethodChannel(binaryMessenger, "dev.agixt.agixt/wake_word_settings").apply {
+            setMethodCallHandler { method, result ->
+                if (method.method == "updateWakeWord") {
+                    val newWakeWord = method.arguments as String
+                    try {
+                        // Get reference to any running BackgroundService instance
+                        val intent = Intent(this@MainActivity, BackgroundService::class.java)
+                        val service = peekService(intent)
+                        
+                        if (service != null) {
+                            // Cast to BackgroundService and update the wake word
+                            (service as BackgroundService).updateWakeWord(newWakeWord)
+                            result.success(true)
+                        } else {
+                            // Service not running yet, store in shared preferences for next start
+                            val prefs = getSharedPreferences("dev.agixt.agixt.WakeWordSettings", Context.MODE_PRIVATE)
+                            prefs.edit().putString("wakeWord", newWakeWord).apply()
+                            result.success(true)
+                        }
+                    } catch (e: Exception) {
+                        result.error("UPDATE_FAILED", "Failed to update wake word: ${e.message}", null)
+                    }
+                } else {
+                    result.notImplemented()
+                }
+            }
+        }
     }
 
 }

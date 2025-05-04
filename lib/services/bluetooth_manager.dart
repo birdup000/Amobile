@@ -594,4 +594,20 @@ class BluetoothManager {
     
     debugPrint('Transcription displayed on glasses, AI assistant will process shortly');
   }
+  
+  // Update the wake word in iOS SpeechStreamRecognizer
+  Future<void> updateIOSWakeWord(String wakeWord) async {
+    if (!Platform.isIOS) {
+      return;
+    }
+    
+    try {
+      // Create a method channel specifically for wake word settings
+      const MethodChannel channel = MethodChannel('dev.agixt.agixt/ios_wake_word');
+      await channel.invokeMethod('updateWakeWord', {'wakeWord': wakeWord});
+      debugPrint('iOS wake word updated to: $wakeWord');
+    } catch (e) {
+      debugPrint('Error updating iOS wake word: $e');
+    }
+  }
 }

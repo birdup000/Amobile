@@ -10,11 +10,29 @@ import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.embedding.engine.dart.DartExecutor
 import io.flutter.view.FlutterCallbackInformation
 import io.flutter.embedding.engine.loader.FlutterLoader
+import android.speech.SpeechRecognizer
+import android.speech.RecognitionListener
+import android.content.ComponentName
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.speech.RecognizerIntent
+import io.flutter.plugin.common.MethodChannel
 
 class BackgroundService : Service(), LifecycleDetector.Listener {
 
     private var flutterEngine: FlutterEngine? = null
     private val flutterLoader = FlutterLoader()
+    private var speechRecognizer: SpeechRecognizer? = null
+    private var wakeWord = "agent" // Default wake word changed to "agent"
+
+    // Method to update the wake word from Flutter
+    fun updateWakeWord(newWakeWord: String) {
+        if (newWakeWord.isNotEmpty()) {
+            Log.i("WakeWord", "Updating wake word from '$wakeWord' to '$newWakeWord'")
+            wakeWord = newWakeWord
+        }
+    }
 
     override fun onCreate() {
         super.onCreate()
@@ -25,10 +43,20 @@ class BackgroundService : Service(), LifecycleDetector.Listener {
             flutterLoader.ensureInitializationComplete(applicationContext, null)
         }
 
+        // Load custom wake word from shared preferences if available
+        val prefs = getSharedPreferences("dev.agixt.agixt.WakeWordSettings", Context.MODE_PRIVATE)
+        val savedWakeWord = prefs.getString("wakeWord", null)
+        if (!savedWakeWord.isNullOrEmpty()) {
+            wakeWord = savedWakeWord
+            Log.i("WakeWord", "Loaded custom wake word: $wakeWord")
+        }
+
         val notification = Notifications.buildForegroundNotification(this)
         startForeground(Notifications.NOTIFICATION_ID_BACKGROUND_SERVICE, notification)
 
         LifecycleDetector.listener = this
+
+        initializeWakeWordDetection()
     }
 
 
@@ -97,6 +125,101 @@ class BackgroundService : Service(), LifecycleDetector.Listener {
         prefs.edit().putLong(KEY_CALLBACK_RAW_HANDLE, handle).apply()
     }
 
+    private fun initializeWakeWordDetection() {
+        speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this, ComponentName(this, BackgroundService::class.java))
+        speechRecognizer?.setRecognitionListener(object : RecognitionListener {
+            override fun onResults(results: Bundle?) {
+                val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+                matches?.let {
+                    for (result in it) {
+                        if (result.contains(wakeWord, ignoreCase = true)) {
+                            triggerAGiXTWorkflow(result)
+                            break
+                        }
+                    }
+                }
+            }
+
+            override fun onError(error: Int) {
+                Log.e("WakeWord", "Error detecting wake word: $error")
+                // Restart recognition after a brief delay if there was an error
+                Handler(Looper.getMainLooper()).postDelayed({
+                    startWakeWordRecognition()
+                }, 3000)
+            }
+
+            // Required RecognitionListener interface method implementations
+            override fun onReadyForSpeech(params: Bundle?) {
+                Log.d("WakeWord", "Ready for speech")
+            }
+
+            override fun onBeginningOfSpeech() {
+                Log.d("WakeWord", "Beginning of speech")
+            }
+
+            override fun onRmsChanged(rmsdB: Float) {
+                // Intentionally left empty - called very frequently with audio levels
+            }
+
+            override fun onBufferReceived(buffer: ByteArray?) {
+                Log.d("WakeWord", "Buffer received")
+            }
+
+            override fun onEndOfSpeech() {
+                Log.d("WakeWord", "End of speech")
+                // Restart listening for the wake word
+                startWakeWordRecognition()
+            }
+
+            override fun onPartialResults(partialResults: Bundle?) {
+                val matches = partialResults?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+                matches?.let {
+                    for (result in it) {
+                        if (result.contains(wakeWord, ignoreCase = true)) {
+                            triggerAGiXTWorkflow(result)
+                            break
+                        }
+                    }
+                }
+            }
+
+            override fun onEvent(eventType: Int, params: Bundle?) {
+                Log.d("WakeWord", "Speech recognition event: $eventType")
+            }
+        })
+        
+        // Start listening for the wake word
+        startWakeWordRecognition()
+    }
+
+    private fun startWakeWordRecognition() {
+        try {
+            val recognizerIntent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, packageName)
+                putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 5)
+                putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
+            }
+            speechRecognizer?.startListening(recognizerIntent)
+        } catch (e: Exception) {
+            Log.e("WakeWord", "Error starting speech recognition: ${e.message}")
+        }
+    }
+
+    private fun triggerAGiXTWorkflow(transcription: String) {
+        Log.i("WakeWord", "Wake word detected: $transcription")
+        
+        // Extract the command after the wake word
+        val commandText = transcription.substring(transcription.indexOf(wakeWord, ignoreCase = true) + wakeWord.length).trim()
+        
+        // Use MethodChannel to communicate with Flutter
+        flutterEngine?.let { engine ->
+            val methodChannel = MethodChannel(engine.dartExecutor.binaryMessenger, "dev.agixt.agixt/wake_word")
+            methodChannel.invokeMethod("processVoiceCommand", mapOf(
+                "transcription" to commandText
+            ))
+        }
+    }
 
     companion object {
         private const val SHARED_PREFERENCES_NAME = "dev.agixt.agixt.BackgroundService"

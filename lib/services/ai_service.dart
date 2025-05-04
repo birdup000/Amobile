@@ -107,6 +107,28 @@ class AIService {
     }
   }
   
+  // Process wake word command received from native code
+  Future<void> processWakeWordCommand(String commandText) async {
+    if (_isProcessing) {
+      debugPrint('Already processing a request');
+      return;
+    }
+    
+    _isProcessing = true;
+    try {
+      // Show that we're processing a wake word command
+      await _bluetoothManager.sendText('Processing wake word command...');
+      
+      // Send the command to AGiXT without requiring button press
+      await _sendMessageToAGiXT(commandText);
+    } catch (e) {
+      debugPrint('Error processing wake word command: $e');
+      await _showErrorMessage('Error processing wake word command');
+    } finally {
+      _isProcessing = false;
+    }
+  }
+  
   // Helper methods for displaying status messages
   Future<void> _showListeningIndicator() async {
     await _bluetoothManager.sendText('Listening...');
