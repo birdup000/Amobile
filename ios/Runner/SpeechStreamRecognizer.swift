@@ -37,6 +37,8 @@ class SpeechStreamRecognizer {
     private var lastTranscription: SFTranscription? // cache to make contrast between near results
     private var cacheString = "" // cache stream recognized formattedString
     
+    private let wakeWord = "agixt"
+    
     enum RecognizerError: Error {
         case nilRecognizer
         case notAuthorizedToRecognize
@@ -115,7 +117,9 @@ class SpeechStreamRecognizer {
             if let error = error {
                 print("SpeechRecognizer Recognition error: \(error)")
             } else if let result = result {
-                    
+                let currentTranscription = result.bestTranscription.formattedString
+                self.processTranscription(currentTranscription)
+                
                 let currentTranscription = result.bestTranscription
                 if lastTranscription == nil {
                     cacheString = currentTranscription.formattedString
@@ -185,6 +189,21 @@ class SpeechStreamRecognizer {
                 print("Failed to get pointer to audio data")
             }
         }
+    }
+    
+    func startWakeWordDetection() {
+        startRecognition(identifier: "EN")
+    }
+
+    func processTranscription(_ transcription: String) {
+        if transcription.lowercased().contains(wakeWord) {
+            triggerAGiXTWorkflow(transcription)
+        }
+    }
+
+    private func triggerAGiXTWorkflow(_ transcription: String) {
+        print("Wake word detected: \(transcription)")
+        // Logic to send transcription to AGiXT workflow
     }
 }
 

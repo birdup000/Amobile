@@ -10,11 +10,16 @@ import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.embedding.engine.dart.DartExecutor
 import io.flutter.view.FlutterCallbackInformation
 import io.flutter.embedding.engine.loader.FlutterLoader
+import android.speech.SpeechRecognizer
+import android.speech.RecognitionListener
+import android.content.ComponentName
 
 class BackgroundService : Service(), LifecycleDetector.Listener {
 
     private var flutterEngine: FlutterEngine? = null
     private val flutterLoader = FlutterLoader()
+    private var speechRecognizer: SpeechRecognizer? = null
+    private val wakeWord = "agixt"
 
     override fun onCreate() {
         super.onCreate()
@@ -29,6 +34,8 @@ class BackgroundService : Service(), LifecycleDetector.Listener {
         startForeground(Notifications.NOTIFICATION_ID_BACKGROUND_SERVICE, notification)
 
         LifecycleDetector.listener = this
+
+        initializeWakeWordDetection()
     }
 
 
@@ -97,6 +104,33 @@ class BackgroundService : Service(), LifecycleDetector.Listener {
         prefs.edit().putLong(KEY_CALLBACK_RAW_HANDLE, handle).apply()
     }
 
+    private fun initializeWakeWordDetection() {
+        speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this, ComponentName(this, BackgroundService::class.java))
+        speechRecognizer?.setRecognitionListener(object : RecognitionListener {
+            override fun onResults(results: Bundle?) {
+                val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+                matches?.let {
+                    for (result in it) {
+                        if (result.contains(wakeWord, ignoreCase = true)) {
+                            triggerAGiXTWorkflow(result)
+                            break
+                        }
+                    }
+                }
+            }
+
+            override fun onError(error: Int) {
+                Log.e("WakeWord", "Error: $error")
+            }
+
+            // Other overridden methods omitted for brevity
+        })
+    }
+
+    private fun triggerAGiXTWorkflow(transcription: String) {
+        Log.i("WakeWord", "Wake word detected: $transcription")
+        // Logic to send transcription to AGiXT workflow
+    }
 
     companion object {
         private const val SHARED_PREFERENCES_NAME = "dev.agixt.agixt.BackgroundService"
