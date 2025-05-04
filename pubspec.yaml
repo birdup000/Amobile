@@ -119,12 +119,12 @@ flutter:
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
 flutter_launcher_icons:
-  image_path: "assets/icons/agixt.png"
-  image_path_ios: "assets/icons/agixt.png"
+  image_path: "assets/icons/AGiXT_New_Yellow_Bold_HiRes_Square.png"
+  image_path_ios: "assets/icons/AGiXT_New_Yellow_Bold_HiRes_Square.png"
 
-  adaptive_icon_foreground: "assets/icons/agixt.png"
-  adaptive_icon_background: "#f6f6f6"
-  image_path_android: "assets/icons/agixt.png"
+  adaptive_icon_foreground: "assets/icons/AGiXT_New_Yellow_Bold_HiRes_Square.png"
+  adaptive_icon_background: "#000000"
+  image_path_android: "assets/icons/AGiXT_New_Yellow_Bold_HiRes_Square.png"
 
   android: true
   min_sdk_android: 16
