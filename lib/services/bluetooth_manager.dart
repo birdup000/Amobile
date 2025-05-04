@@ -15,6 +15,7 @@ import 'package:agixt/services/notifications_listener.dart';
 import 'package:agixt/services/stops_manager.dart';
 import 'package:agixt/utils/utils.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';  // Add this import for MethodChannel
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:notification_listener_service/notification_event.dart';
 import 'package:permission_handler/permission_handler.dart';
