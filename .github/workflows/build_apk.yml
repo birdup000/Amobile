@@ -62,7 +62,6 @@ jobs:
       - name: Send Report to Discord
         if: always()
         run: |
-          # Map GitHub actor to Discord user
           if [ "${{ github.actor }}" == "Josh-XT" ]; then
             DISCORD_NAME="<@381837595522367488>"
           elif [ "${{ github.actor }}" == "waiscodes" ]; then
@@ -78,7 +77,6 @@ jobs:
           else
             DISCORD_NAME="**${{ github.actor }}**"
           fi
-          # Get build status and branch information
           BRANCH_NAME=$(echo ${{ github.ref }} | awk -F'/' '{print $NF}')
           VERSION="${{ steps.next_tag_version.outputs.new_tag }}"
           ARTIFACT_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts/${{ steps.set_artifact_id.outputs.artifact_id }}"
@@ -97,9 +95,7 @@ jobs:
           else
             MESSAGE="❌ Build failed for **${{ github.repository }}** on branch **$BRANCH_NAME** at commit ${{ github.sha }}\n**${{ github.event.head_commit.message }}** by ${DISCORD_NAME} \nView the build logs here: $JOB_URL"
           fi
-          curl -H "Content-Type:application/json" \
-                -d "{\"content\":\"$MESSAGE\"}" \
-                "${{ secrets.DISCORD_WEBHOOK }}"
+          curl -H "Content-Type:application/json" -d "{\"content\":\"$MESSAGE\"}" "${{ secrets.DISCORD_WEBHOOK }}"
 
   release:
     name: Create Release and Upload APK
