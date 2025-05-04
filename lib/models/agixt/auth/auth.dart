@@ -5,6 +5,108 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart';
 
+class UserModel {
+  final String id;
+  final String email;
+  final String firstName;
+  final String lastName;
+  final String timezone;
+  final String phoneNumber;
+  final List<CompanyModel> companies;
+  final String inputTokens;
+  final String outputTokens;
+  final String? agentId;
+
+  UserModel({
+    required this.id,
+    required this.email,
+    required this.firstName,
+    required this.lastName,
+    required this.timezone,
+    this.phoneNumber = '',
+    required this.companies,
+    required this.inputTokens,
+    required this.outputTokens,
+    this.agentId,
+  });
+
+  factory UserModel.fromJson(Map<String, dynamic> json) {
+    return UserModel(
+      id: json['id'] ?? '',
+      email: json['email'] ?? '',
+      firstName: json['first_name'] ?? '',
+      lastName: json['last_name'] ?? '',
+      timezone: json['timezone'] ?? 'UTC',
+      phoneNumber: json['phone_number'] ?? '',
+      companies: (json['companies'] as List<dynamic>?)
+              ?.map((company) => CompanyModel.fromJson(company))
+              .toList() ??
+          [],
+      inputTokens: json['input_tokens'] ?? '0',
+      outputTokens: json['output_tokens'] ?? '0',
+      agentId: json['agent_id'],
+    );
+  }
+}
+
+class CompanyModel {
+  final String id;
+  final String name;
+  final String agentName;
+  final String? trainingData;
+  final int roleId;
+  final bool primary;
+  final List<AgentModel> agents;
+
+  CompanyModel({
+    required this.id,
+    required this.name,
+    required this.agentName,
+    this.trainingData,
+    required this.roleId,
+    required this.primary,
+    required this.agents,
+  });
+
+  factory CompanyModel.fromJson(Map<String, dynamic> json) {
+    return CompanyModel(
+      id: json['id'] ?? '',
+      name: json['name'] ?? '',
+      agentName: json['agent_name'] ?? '',
+      trainingData: json['training_data'],
+      roleId: json['role_id'] ?? 0,
+      primary: json['primary'] ?? false,
+      agents: (json['agents'] as List<dynamic>?)
+              ?.map((agent) => AgentModel.fromJson(agent))
+              .toList() ??
+          [],
+    );
+  }
+}
+
+class AgentModel {
+  final String id;
+  final String name;
+  final bool status;
+  final String companyId;
+
+  AgentModel({
+    required this.id,
+    required this.name,
+    required this.status,
+    required this.companyId,
+  });
+
+  factory AgentModel.fromJson(Map<String, dynamic> json) {
+    return AgentModel(
+      id: json['id'] ?? '',
+      name: json['name'] ?? '',
+      status: json['status'] ?? false,
+      companyId: json['company_id'] ?? '',
+    );
+  }
+}
+
 class AuthModel {
   final String email;
   final String token;
@@ -114,5 +216,35 @@ class AuthService {
   static Future<String> getWebUrlWithToken() async {
     final jwt = await getJwt();
     return '$appUri?token=$jwt';
+  }
+  
+  // Fetch user information from the server
+  static Future<UserModel?> getUserInfo() async {
+    try {
+      final jwt = await getJwt();
+      
+      if (jwt == null || jwt.isEmpty) {
+        return null;
+      }
+      
+      final response = await http.get(
+        Uri.parse('$serverUrl/v1/user'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $jwt'
+        },
+      );
+      
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> userData = jsonDecode(response.body);
+        return UserModel.fromJson(userData);
+      } else {
+        debugPrint('Failed to get user info: ${response.statusCode}');
+        return null;
+      }
+    } catch (e) {
+      debugPrint('Error fetching user info: $e');
+      return null;
+    }
   }
 }
