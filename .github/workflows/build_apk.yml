@@ -82,7 +82,7 @@ jobs:
           VERSION="${{ steps.next_tag_version.outputs.new_tag }}"
           ARTIFACT_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts/${{ steps.set_artifact_id.outputs.artifact_id }}"
           JOB_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          COMMIT_MESSAGE="${{ github.event.head_commit.message }}"
+          COMMIT_MESSAGE=$(echo "${{ github.event.head_commit.message }}" | tr '\n' ' ' | sed 's/"/\\"/g')
           FILE_PATH="build/app/outputs/flutter-apk/app-release.apk"
           if [ -f "$FILE_PATH" ]; then
             FILE_SIZE=$(stat -c%s "$FILE_PATH")
