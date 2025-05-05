@@ -149,8 +149,8 @@ class TimeAndWeather {
   final int weatherIcon;
 
   TimeAndWeather({
-    required this.temperatureUnit,
-    required this.timeFormat,
+    this.temperatureUnit = TemperatureUnit.FAHRENHEIT, // Default to Fahrenheit
+    this.timeFormat = TimeFormat.TWELVE_HOUR, // Default to 12-hour format
     required this.temperatureInCelsius,
     required this.weatherIcon,
   });
