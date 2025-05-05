@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:agixt/utils/ui_perfs.dart';
 
 class WeatherIcons {
   static const int NOTHING = 0x00;
@@ -154,6 +155,20 @@ class TimeAndWeather {
     required this.temperatureInCelsius,
     required this.weatherIcon,
   });
+
+  // Add a factory constructor that uses UI preferences
+  factory TimeAndWeather.fromPreferences({
+    required int temperatureInCelsius,
+    required int weatherIcon,
+  }) {
+    final uiPrefs = UiPerfs.singleton;
+    return TimeAndWeather(
+      temperatureUnit: uiPrefs.temperatureUnit,
+      timeFormat: uiPrefs.timeFormat,
+      temperatureInCelsius: temperatureInCelsius,
+      weatherIcon: weatherIcon,
+    );
+  }
 
   Uint8List buildAddCommand(int seqId) {
     int convertToFahrenheit =
