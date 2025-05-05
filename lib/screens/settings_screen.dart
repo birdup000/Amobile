@@ -2,7 +2,6 @@ import 'package:agixt/screens/settings/dashboard_screen.dart';
 import 'package:agixt/screens/settings/debug_screen.dart';
 import 'package:agixt/screens/settings/homeassistant_screen.dart';
 import 'package:agixt/screens/settings/notifications_screen.dart';
-import 'package:agixt/screens/settings/traewelling_screen.dart';
 import 'package:agixt/screens/settings/ui_settings.dart';
 import 'package:agixt/screens/settings/whisper_screen.dart';
 import 'package:agixt/screens/wake_word_settings_screen.dart';
@@ -34,23 +33,6 @@ class SettingsPage extends StatelessWidget {
                 context,
                 MaterialPageRoute(
                     builder: (context) => DashboardSettingsPage()),
-              );
-            },
-          ),
-          ListTile(
-            title: Row(
-              children: [
-                Icon(Icons.train),
-                SizedBox(width: 10),
-                Text('Träwelling'),
-              ],
-            ),
-            trailing: Icon(Icons.chevron_right),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => TraewellingSettingsPage()),
               );
             },
           ),

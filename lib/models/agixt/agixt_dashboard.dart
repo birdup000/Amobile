@@ -36,7 +36,6 @@ class AGiXTDashboard {
   List<AGiXTItem> items = [];
 
   List<AGiXTWidget> installedWidgets = [
-    TraewellingWidget(),
   ];
 
   bool _initialized = false;
