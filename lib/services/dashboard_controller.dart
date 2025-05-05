@@ -3,7 +3,7 @@ import 'dart:typed_data';
 import 'package:agixt/models/android/weather_data.dart';
 import 'package:agixt/models/g1/dashboard.dart';
 import 'package:agixt/models/g1/time_weather.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:agixt/utils/ui_perfs.dart'; // Import UiPerfs
 
 class DashboardController {
   static final DashboardController _singleton = DashboardController._internal();
@@ -18,33 +18,11 @@ class DashboardController {
 
   int _seqId = 0;
 
-  Future<TimeFormat> _getTimeFormatFromPreferences() async {
-    final prefs = await SharedPreferences.getInstance();
-    final is24h = prefs.getBool('timeIs24h');
-    if (is24h == null) {
-      return TimeFormat.TWENTY_FOUR_HOUR;
-    }
-    if (!is24h) {
-      return TimeFormat.TWELVE_HOUR;
-    }
-
-    return TimeFormat.TWENTY_FOUR_HOUR;
-  }
-
-  Future<TemperatureUnit> _getTemperatureUnitFromPreferences() async {
-    final prefs = await SharedPreferences.getInstance();
-    final isCelcius = prefs.getBool('temperatureIsCelcius');
-    if (isCelcius == null) {
-      return TemperatureUnit.CELSIUS;
-    }
-    if (!isCelcius) {
-      return TemperatureUnit.FAHRENHEIT;
-    }
-
-    return TemperatureUnit.CELSIUS;
-  }
+  // Removed _getTimeFormatFromPreferences
+  // Removed _getTemperatureUnitFromPreferences
 
   Future<List<Uint8List>> updateDashboardCommand() async {
+    final UiPerfs uiPerfs = UiPerfs.singleton; // Get UiPerfs instance
     List<Uint8List> commands = [];
     int temp = 0;
     int weatherIcon = WeatherIcons.NOTHING;
@@ -57,8 +35,8 @@ class DashboardController {
     }
 
     commands.add(TimeAndWeather(
-      temperatureUnit: await _getTemperatureUnitFromPreferences(),
-      timeFormat: await _getTimeFormatFromPreferences(),
+      temperatureUnit: uiPerfs.temperatureUnit, // Use UiPerfs value
+      timeFormat: uiPerfs.timeFormat,           // Use UiPerfs value
       temperatureInCelsius: temp,
       weatherIcon: weatherIcon,
     ).buildAddCommand(_seqId++));
