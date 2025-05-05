@@ -1,4 +1,4 @@
-FROM joshxt/flutterbuilder:latest
+FROM joshxt/flutterbuilder:main
 
 # Install additional dependencies if needed
 RUN apt-get update && apt-get install -y \
@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /workspaces
 
 # Ensure Flutter SDK is on PATH
-ENV PATH="/flutter/bin:${PATH}"
+ENV PATH="/usr/local/bin/flutter/bin:${PATH}"
 
 # Pre-download dependencies
 COPY pubspec.yaml /tmp/
