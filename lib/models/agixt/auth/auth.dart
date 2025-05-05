@@ -190,22 +190,55 @@ class AuthService {
       );
 
       if (response.statusCode == 200) {
-        // Extract JWT from login URL in response
         final responseBody = jsonDecode(response.body);
-        final loginUrl = responseBody as String;
+        String? jwt;
         
-        if (loginUrl.contains('?token=')) {
-          final parts = loginUrl.split('?token=');
-          if (parts.length > 1) {
-            final jwt = parts[1];
-            await storeJwt(jwt);
-            await storeEmail(email);
-            return jwt;
+        // Handle response as string (magic link with token)
+        if (responseBody is String) {
+          final loginUrl = responseBody;
+          // Extract JWT from URL format "Log in at ?token=xyz"
+          if (loginUrl.contains('?token=')) {
+            final parts = loginUrl.split('?token=');
+            if (parts.length > 1) {
+              jwt = parts[1].trim();
+            }
+          }
+        } 
+        // Handle response with 'detail' field containing the URL with token
+        else if (responseBody is Map<String, dynamic> && responseBody.containsKey('detail')) {
+          final loginUrl = responseBody['detail'];
+          if (loginUrl is String && loginUrl.contains('?token=')) {
+            final parts = loginUrl.split('?token=');
+            if (parts.length > 1) {
+              jwt = parts[1].trim();
+            }
           }
         }
+        // Handle response as object with token field
+        else if (responseBody is Map<String, dynamic> && responseBody.containsKey('token')) {
+          jwt = responseBody['token'];
+          // Remove 'Bearer ' prefix if present
+          if (jwt != null && jwt.startsWith('Bearer ')) {
+            jwt = jwt.substring(7);
+          }
+        }
+        
+        if (jwt != null && jwt.isNotEmpty) {
+          await storeJwt(jwt);
+          await storeEmail(email);
+          return jwt;
+        } else {
+          // 200 status code but couldn't extract JWT
+          debugPrint('Login successful but couldn\'t extract JWT token from response: $responseBody');
+          return null;
+        }
+      } else if (response.statusCode == 401) {
+        debugPrint('Login failed: Unauthorized (401) - Invalid credentials');
+        return null;
+      } else {
+        debugPrint('Login failed: ${response.statusCode} - ${response.reasonPhrase}');
+        return null;
       }
-      
-      return null;
     } catch (e) {
       debugPrint('Login error: $e');
       return null;
