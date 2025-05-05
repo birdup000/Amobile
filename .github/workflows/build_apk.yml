@@ -62,7 +62,7 @@ jobs:
       - name: Send Report to Discord
         if: always()
         run: |
-          GITHUB_USERNAME=$(echo ${{ github.actor }} | awk '{print toupper(substr($0,1,1)) substr($0,2)}')
+          GITHUB_USERNAME=$(echo ${{ github.actor }}
           if [ "$GITHUB_USERNAME" == "Josh-XT" ]; then
             DISCORD_NAME="<@381837595522367488>"
           elif [ "$GITHUB_USERNAME" == "waiscodes" ]; then
