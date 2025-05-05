@@ -3,7 +3,6 @@ import 'package:agixt/models/agixt/checklist.dart';
 import 'package:agixt/models/agixt/daily.dart';
 import 'package:agixt/models/agixt/stop.dart';
 import 'package:agixt/models/agixt/widgets/agixt_widget.dart';
-import 'package:agixt/models/agixt/widgets/traewelling.dart';
 import 'package:agixt/models/g1/note.dart';
 import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
