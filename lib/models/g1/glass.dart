@@ -4,6 +4,7 @@ import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'dart:async';
 import '../../services/bluetooth_reciever.dart';
 import '../../utils/constants.dart';
+import '../../services/ai_service.dart';
 
 enum GlassSide { left, right }
 
@@ -34,7 +35,12 @@ class Glass {
     required this.name,
     required this.device,
     required this.side,
-  });
+  }) {
+    // Bind side button press to AGiXT chat completion
+    onSideButtonPress = () async {
+      await AIService.singleton.handleSideButtonPress();
+    };
+  }
 
   Future<void> connect() async {
     try {

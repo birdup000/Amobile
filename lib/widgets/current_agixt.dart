@@ -53,7 +53,7 @@ class _CurrentAGiXTState extends State<CurrentAGiXT> {
             children: [
               Padding(
                 padding: const EdgeInsets.only(left: 16),
-                child: const Text('Current AGiXT'),
+                child: const Text('Current Tasks'),
               ),
               IconButton(onPressed: _refreshData, icon: Icon(Icons.refresh)),
             ],
