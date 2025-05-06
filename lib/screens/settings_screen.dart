@@ -3,7 +3,7 @@ import 'package:agixt/screens/settings/dashboard_screen.dart';
 import 'package:agixt/screens/settings/debug_screen.dart';
 import 'package:agixt/screens/settings/notifications_screen.dart';
 import 'package:agixt/screens/settings/whisper_screen.dart';
-import 'package:agixt/screens/wake_word_settings_screen.dart';
+// Removed wake word settings import
 import 'package:flutter/material.dart';
 
 class SettingsPage extends StatelessWidget {
@@ -51,24 +51,7 @@ class SettingsPage extends StatelessWidget {
               );
             },
           ),
-          // Add Wake Word Settings option
-          ListTile(
-            title: Row(
-              children: [
-                Icon(Icons.record_voice_over),
-                SizedBox(width: 10),
-                Text('Wake Word Settings'),
-              ],
-            ),
-            trailing: Icon(Icons.chevron_right),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => const WakeWordSettingsScreen()),
-              );
-            },
-          ),
+          // Wake Word Settings option removed
           ListTile(
             title: Row(
               children: [
