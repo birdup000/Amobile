@@ -73,6 +73,7 @@ dev_dependencies:
     sdk: flutter
   flutter_launcher_icons: ^0.13.1
 
+
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
   # activated in the `analysis_options.yaml` file located at the root of your
@@ -91,6 +92,7 @@ flutter:
   assets:
     - assets/icons/
     - assets/badapple/
+    - assets/icons/AGiXT_whitebg.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
@@ -118,13 +120,10 @@ flutter:
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
 flutter_launcher_icons:
-  image_path: "assets/icons/AGiXT_New_Yellow_Bold_HiRes_Square.png"
-  image_path_ios: "assets/icons/AGiXT_New_Yellow_Bold_HiRes_Square.png"
-
-  adaptive_icon_foreground: "assets/icons/AGiXT_New_Yellow_Bold_HiRes_Square.png"
+  image_path: "assets/icons/AGiXT_whitebg.png"
+  image_path_ios: "assets/icons/AGiXT_whitebg.png"
+  adaptive_icon_foreground: "assets/icons/AGiXT_whitebg.png"
   adaptive_icon_background: "#000000"
-  image_path_android: "assets/icons/AGiXT_New_Yellow_Bold_HiRes_Square.png"
-
   android: true
   min_sdk_android: 16
   ios: true
