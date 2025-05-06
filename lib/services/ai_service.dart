@@ -54,10 +54,11 @@ class AIService {
     
     _isProcessing = true;
     try {
-      await _showListeningIndicator();
-      
-      // Open microphone
+      // First open the microphone before showing "Listening..."
       await _bluetoothManager.setMicrophone(true);
+      
+      // Now show listening indicator since we're actually listening
+      await _showListeningIndicator();
       
       // Set a timeout for voice recording (5 seconds)
       _micTimer = Timer(const Duration(seconds: 5), () async {
@@ -76,11 +77,12 @@ class AIService {
     _micTimer?.cancel();
     
     try {
+      // Show processing message before closing microphone
+      // because we're still processing the audio we just captured
+      await _showProcessingMessage();
+      
       // Close microphone
       await _bluetoothManager.setMicrophone(false);
-      
-      // Show processing message
-      await _showProcessingMessage();
       
       // Initialize WhisperService if not already initialized
       if (_whisperService == null) {
