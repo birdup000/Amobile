@@ -15,7 +15,6 @@ class DashboardSettingsPage extends StatefulWidget {
 
 class DashboardSettingsPageState extends State<DashboardSettingsPage> {
   bool _is24HourFormat = UiPerfs.singleton.timeFormat == TimeFormat.TWENTY_FOUR_HOUR; // Corrected enum value
-  bool _isCelsius = UiPerfs.singleton.temperatureUnit == TemperatureUnit.CELSIUS; // Use UiPerfs
   final BluetoothManager _bluetoothManager = BluetoothManager(); // Added BluetoothManager instance
 
   // Removed Weather Provider State variables
@@ -30,8 +29,8 @@ class DashboardSettingsPageState extends State<DashboardSettingsPage> {
   void _loadSettings() {
     setState(() {
       _is24HourFormat = UiPerfs.singleton.timeFormat == TimeFormat.TWENTY_FOUR_HOUR; // Corrected enum value
-      _isCelsius = UiPerfs.singleton.temperatureUnit == TemperatureUnit.CELSIUS;
       // Removed weather provider package name loading and validation
+      // Removed _isCelsius update
     });
   }
 
@@ -42,11 +41,10 @@ class DashboardSettingsPageState extends State<DashboardSettingsPage> {
     UiPerfs.singleton.timeFormat = _is24HourFormat
         ? TimeFormat.TWENTY_FOUR_HOUR // Corrected enum value
         : TimeFormat.TWELVE_HOUR; // Corrected enum value
-    UiPerfs.singleton.temperatureUnit =
-        _isCelsius ? TemperatureUnit.CELSIUS : TemperatureUnit.FAHRENHEIT;
-    // await UiPerfs.singleton.save(); // Removed explicit save call (assuming setters handle it)
-    // Trigger dashboard update via Bluetooth
-    _bluetoothManager.sync(); // Correct method is sync()
+  // Removed temperature unit saving
+  // await UiPerfs.singleton.save(); // Removed explicit save call (assuming setters handle it)
+  // Trigger dashboard update via Bluetooth
+  _bluetoothManager.sync(); // Correct method is sync()
   }
 
   void _launchURL(String to) async {
@@ -81,18 +79,7 @@ class DashboardSettingsPageState extends State<DashboardSettingsPage> {
                 _saveSettingsAndTriggerUpdate(); // Call updated save function
               },
             ),
-            SwitchListTile(
-              title: _isCelsius
-                  ? Text('Weather in Celsius')
-                  : Text('Weather in Fahrenheit'),
-              value: _isCelsius,
-              onChanged: (bool value) {
-                setState(() {
-                  _isCelsius = value;
-                });
-                _saveSettingsAndTriggerUpdate(); // Call updated save function
-              },
-            ),
+            // Removed Weather Format (Celsius/Fahrenheit) SwitchListTile
             // Removed Weather Provider section and selector UI
           ],
         ),
