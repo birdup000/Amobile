@@ -28,7 +28,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           release_branches: main
           create_annotated_tag: true
-          dry_run: true
+          dry_run: ${{ github.ref != 'refs/heads/main' }}
       - name: Setup repositories cache
         uses: actions/cache@v3
         with:
