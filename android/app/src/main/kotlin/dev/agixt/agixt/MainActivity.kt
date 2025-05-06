@@ -170,38 +170,6 @@ class MainActivity: FlutterActivity() {
             }
         }
         
-        // Add a new method channel for wake word customization
-        MethodChannel(binaryMessenger, "dev.agixt.agixt/wake_word_settings").apply {
-            setMethodCallHandler { method, result ->
-                if (method.method == "updateWakeWord") {
-                    val newWakeWord = method.arguments as String
-                    try {
-                        // Check if service is running
-                        val activityManager = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-                        val serviceRunning = activityManager.getRunningServices(Integer.MAX_VALUE)
-                            .any { it.service.className == BackgroundService::class.java.name }
-                        
-                        if (serviceRunning) {
-                            // Service is running, send a broadcast to update the wake word
-                            val intent = Intent("dev.agixt.agixt.UPDATE_WAKE_WORD")
-                            intent.putExtra("wakeWord", newWakeWord)
-                            sendBroadcast(intent)
-                            result.success(true)
-                        } else {
-                            // Service not running yet, store in shared preferences for next start
-                            val prefs = getSharedPreferences("dev.agixt.agixt.WakeWordSettings", Context.MODE_PRIVATE)
-                            prefs.edit().putString("wakeWord", newWakeWord).apply()
-                            result.success(true)
-                        }
-                    } catch (e: Exception) {
-                        result.error("UPDATE_FAILED", "Failed to update wake word: ${e.message}", null)
-                    }
-                } else {
-                    result.notImplemented()
-                }
-            }
-        }
-        
         // Add a method channel for handling OAuth callback
         MethodChannel(binaryMessenger, "dev.agixt.agixt/oauth_callback").apply {
             setMethodCallHandler { method, result ->
