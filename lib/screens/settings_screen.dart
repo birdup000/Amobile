@@ -6,7 +6,6 @@ import 'package:agixt/screens/settings/notifications_screen.dart';
 import 'package:agixt/screens/settings/ui_settings.dart';
 import 'package:agixt/screens/settings/whisper_screen.dart';
 import 'package:agixt/screens/wake_word_settings_screen.dart';
-import 'package:agixt/widgets/about_dialog.dart';
 import 'package:flutter/material.dart';
 
 class SettingsPage extends StatelessWidget {
@@ -136,17 +135,6 @@ class SettingsPage extends StatelessWidget {
                 MaterialPageRoute(builder: (context) => DebugPage()),
               );
             },
-          ),
-          ListTile(
-            title: Row(
-              children: [
-                Icon(Icons.info),
-                SizedBox(width: 10),
-                Text('About'),
-              ],
-            ),
-            trailing: Icon(Icons.chevron_right),
-            onTap: () => showCustomAboutDialog(context),
           ),
         ],
       ),
