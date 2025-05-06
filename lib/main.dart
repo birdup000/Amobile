@@ -9,13 +9,10 @@ import 'package:agixt/models/agixt/daily.dart';
 import 'package:agixt/models/agixt/stop.dart';
 import 'package:agixt/screens/auth/login_screen.dart';
 import 'package:agixt/screens/auth/profile_screen.dart';
-import 'package:agixt/screens/wake_word_settings_screen.dart';
 import 'package:agixt/services/ai_service.dart';
 import 'package:agixt/services/bluetooth_manager.dart';
 import 'package:agixt/services/stops_manager.dart';
-import 'package:agixt/services/wake_word_service.dart';
 import 'package:agixt/utils/ui_perfs.dart';
-import 'package:agixt/utils/wake_word_settings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
@@ -24,8 +21,6 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:app_links/app_links.dart';
 import 'screens/home_screen.dart';
 
-// Wake word detection method channel
-const MethodChannel _wakeWordChannel = MethodChannel('dev.agixt.agixt/wake_word');
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
@@ -44,9 +39,6 @@ void main() async {
     appUri: APP_URI,
     appName: APP_NAME,
   );
-
-  // Set up wake word detection method channel handler
-  _setupWakeWordDetection();
 
   flutterLocalNotificationsPlugin.initialize(
     InitializationSettings(
@@ -71,8 +63,6 @@ void main() async {
   await BluetoothManager.singleton.initialize();
   BluetoothManager.singleton.attemptReconnectFromStorage();
   
-  // Initialize wake word settings
-  await WakeWordSettings.singleton.initialize();
 
   var channel = const MethodChannel('dev.agixt.agixt/background_service');
   var callbackHandle = PluginUtilities.getCallbackHandle(backgroundMain);
@@ -258,7 +248,6 @@ class _AppState extends State<App> {
         '/home': (context) => const HomePage(),
         '/login': (context) => const LoginScreen(),
         '/profile': (context) => const ProfileScreen(),
-        '/wake_word_settings': (context) => const WakeWordSettingsScreen(),
       },
     );
   }
@@ -413,26 +402,4 @@ void _handleDeleteAction(String actionId) async {
     }
     StopsManager().reload();
   }
-}
-
-void _setupWakeWordDetection() {
-  // Initialize the wake word service singleton
-  final wakeWordService = WakeWordService();
-  
-  _wakeWordChannel.setMethodCallHandler((call) async {
-    if (call.method == 'processVoiceCommand') {
-      debugPrint('Wake word detected and voice command received');
-      
-      // Extract the transcription from the method call arguments
-      final Map<dynamic, dynamic> args = call.arguments as Map;
-      final String transcription = args['transcription'] as String;
-      
-      // Process the voice command using our wake word service
-      if (transcription.isNotEmpty) {
-        debugPrint('Processing voice command: $transcription');
-        await wakeWordService.processVoiceCommand(transcription);
-      }
-    }
-    return null;
-  });
 }

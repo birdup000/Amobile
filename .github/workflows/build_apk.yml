@@ -59,8 +59,9 @@ jobs:
       - name: Set artifact ID as output
         id: set_artifact_id
         run: echo "artifact_id=${{ steps.upload_artifact.outputs.artifact-id }}" >> $GITHUB_OUTPUT
-      - name: Send Report to Discord
+      - name: Send APK to Discord
         if: always()
+        continue-on-error: true
         run: |
           GITHUB_USERNAME="${{ github.actor }}"
           if [ "$GITHUB_USERNAME" = "Josh-XT" ]; then

@@ -2,8 +2,6 @@ import 'package:agixt/widgets/glass_status.dart';
 import 'package:agixt/screens/settings/dashboard_screen.dart';
 import 'package:agixt/screens/settings/debug_screen.dart';
 import 'package:agixt/screens/settings/notifications_screen.dart';
-import 'package:agixt/screens/settings/whisper_screen.dart';
-// Removed wake word settings import
 import 'package:flutter/material.dart';
 
 class SettingsPage extends StatelessWidget {
@@ -18,40 +16,6 @@ class SettingsPage extends StatelessWidget {
       body: ListView(
         children: [
           GlassStatus(),
-          ListTile(
-            title: Row(
-              children: [
-                Icon(Icons.dashboard),
-                SizedBox(width: 10),
-                Text('G1 Dashboard'),
-              ],
-            ),
-            trailing: Icon(Icons.chevron_right),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => DashboardSettingsPage()),
-              );
-            },
-          ),
-          ListTile(
-            title: Row(
-              children: [
-                Icon(Icons.mic),
-                SizedBox(width: 10),
-                Text('Whisper'),
-              ],
-            ),
-            trailing: Icon(Icons.chevron_right),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => WhisperSettingsPage()),
-              );
-            },
-          ),
-          // Wake Word Settings option removed
           ListTile(
             title: Row(
               children: [
@@ -72,16 +36,17 @@ class SettingsPage extends StatelessWidget {
           ListTile(
             title: Row(
               children: [
-                Icon(Icons.bug_report),
+                Icon(Icons.dashboard),
                 SizedBox(width: 10),
-                Text('Debug'),
+                Text('Time Settings'),
               ],
             ),
             trailing: Icon(Icons.chevron_right),
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => DebugPage()),
+                MaterialPageRoute(
+                    builder: (context) => DashboardSettingsPage()),
               );
             },
           ),

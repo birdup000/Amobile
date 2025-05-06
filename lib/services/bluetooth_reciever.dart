@@ -136,7 +136,7 @@ class BluetoothReciever {
       if (_lastWords.isNotEmpty) {
         debugPrint('Final transcription: $_lastWords');
         // Use AIService to send transcription to AGiXT Chat
-        await AIService.singleton.processWakeWordCommand(_lastWords);
+        await AIService.singleton.processVoiceCommand(_lastWords);
       } else {
         debugPrint('Final transcription is empty.');
       }
@@ -286,7 +286,7 @@ class BluetoothReciever {
 
             // Use AIService to send transcription to AGiXT Chat
             if (transcription.isNotEmpty) {
-              await AIService.singleton.processWakeWordCommand(transcription);
+              await AIService.singleton.processVoiceCommand(transcription);
             } else {
               debugPrint('[$side] Remote transcription was empty.');
             }
