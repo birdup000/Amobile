@@ -244,6 +244,7 @@ class _AppState extends State<App> {
           : AppRetainWidget(
               child: _isLoggedIn ? const HomePage() : const LoginScreen(),
             ),
+      // Note: We're using HomePage which already has Gravatar implementation in the app bar
       routes: {
         '/home': (context) => const HomePage(),
         '/login': (context) => const LoginScreen(),

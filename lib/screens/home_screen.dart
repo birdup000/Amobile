@@ -39,14 +39,31 @@ class _HomePageState extends State<HomePage> {
     final email = await AuthService.getEmail();
     final isLoggedIn = await AuthService.isLoggedIn();
 
-    setState(() {
-      _userEmail = email;
-      _isLoggedIn = isLoggedIn;
-    });
+    if (mounted) {
+      setState(() {
+        _userEmail = email;
+        _isLoggedIn = isLoggedIn;
+      });
+      
+      // For debugging
+      print("User email: $_userEmail");
+      print("Is logged in: $_isLoggedIn");
 
-    // Redirect to login if not logged in
-    if (!_isLoggedIn && mounted) {
-      Navigator.of(context).pushReplacementNamed('/login');
+      // Redirect to login if not logged in
+      if (!_isLoggedIn) {
+        Navigator.of(context).pushReplacementNamed('/login');
+      } else if (_userEmail == null || _userEmail!.isEmpty) {
+        // If logged in but email is missing, try to get the user info
+        final userInfo = await AuthService.getUserInfo();
+        if (userInfo != null && userInfo.email.isNotEmpty) {
+          setState(() {
+            _userEmail = userInfo.email;
+          });
+          // Store the email for future use
+          await AuthService.storeEmail(userInfo.email);
+          print("Updated user email from user info: $_userEmail");
+        }
+      }
     }
   }
 
