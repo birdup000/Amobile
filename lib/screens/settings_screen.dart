@@ -19,23 +19,6 @@ class SettingsPage extends StatelessWidget {
           ListTile(
             title: Row(
               children: [
-                Icon(Icons.dashboard),
-                SizedBox(width: 10),
-                Text('Even Realities Settings'),
-              ],
-            ),
-            trailing: Icon(Icons.chevron_right),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => DashboardSettingsPage()),
-              );
-            },
-          ),
-          ListTile(
-            title: Row(
-              children: [
                 Icon(Icons.notifications),
                 SizedBox(width: 10),
                 Text('App Notifications'),
@@ -50,6 +33,24 @@ class SettingsPage extends StatelessWidget {
               );
             },
           ),
+          ListTile(
+            title: Row(
+              children: [
+                Icon(Icons.dashboard),
+                SizedBox(width: 10),
+                Text('Time Settings'),
+              ],
+            ),
+            trailing: Icon(Icons.chevron_right),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => DashboardSettingsPage()),
+              );
+            },
+          ),
+        ],
       ),
     );
   }
