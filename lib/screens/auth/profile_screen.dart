@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:agixt/models/agixt/auth/auth.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:agixt/widgets/gravatar_image.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -29,10 +30,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     // Get stored email as fallback
     final email = await AuthService.getEmail();
-    
+
     // Try to get full user info from the server
     final userInfo = await AuthService.getUserInfo();
-    
+
     setState(() {
       if (userInfo != null) {
         _userModel = userInfo;
@@ -53,7 +54,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
 
     await AuthService.logout();
-    
+
     if (mounted) {
       Navigator.of(context).pushReplacementNamed('/login');
     }
@@ -62,7 +63,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _openAGiXTWeb() async {
     final url = await AuthService.getWebUrlWithToken();
     final uri = Uri.parse(url);
-    
+
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
@@ -71,7 +72,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final appName = AuthService.appName;
-    
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Profile'),
@@ -84,17 +85,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   const SizedBox(height: 20),
-                  
-                  // User avatar or icon
-                  const CircleAvatar(
-                    radius: 50,
-                    child: Icon(Icons.person, size: 50),
-                  ),
-                  
+
+                  // Replace CircleAvatar with GravatarImage
+                  _email != null
+                      ? GravatarImage(
+                          email: _email!,
+                          size: 100,
+                        )
+                      : const CircleAvatar(
+                          radius: 50,
+                          child: Icon(Icons.person, size: 50),
+                        ),
+
                   const SizedBox(height: 20),
-                  
+
                   // User name and email
-                  if (_firstName != null && _lastName != null && _firstName!.isNotEmpty && _lastName!.isNotEmpty) ...[
+                  if (_firstName != null &&
+                      _lastName != null &&
+                      _firstName!.isNotEmpty &&
+                      _lastName!.isNotEmpty) ...[
                     Text(
                       '${_firstName!} ${_lastName!}',
                       style: const TextStyle(
@@ -104,7 +113,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     const SizedBox(height: 8),
                   ],
-                  
+
                   Text(
                     _email ?? 'User',
                     style: TextStyle(
@@ -113,17 +122,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       fontStyle: FontStyle.italic,
                     ),
                   ),
-                  
+
                   if (_userModel != null) ...[
                     const SizedBox(height: 20),
                     const Divider(),
                     const SizedBox(height: 10),
-                    
+
                     // Show user timezone
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.access_time, size: 18, color: Colors.blue),
+                        const Icon(Icons.access_time,
+                            size: 18, color: Colors.blue),
                         const SizedBox(width: 8),
                         Text(
                           'Timezone: ${_userModel!.timezone}',
@@ -131,14 +141,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ],
                     ),
-                    
+
                     const SizedBox(height: 10),
-                    
-                    // Show token usage  
+
+                    // Show token usage
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.analytics_outlined, size: 18, color: Colors.green),
+                        const Icon(Icons.analytics_outlined,
+                            size: 18, color: Colors.green),
                         const SizedBox(width: 8),
                         Flexible(
                           child: Text(
@@ -149,10 +160,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ],
                     ),
-                    
+
                     if (_userModel!.companies.isNotEmpty) ...[
                       const SizedBox(height: 20),
-                      
+
                       // Show primary company
                       Text(
                         'Company: ${_userModel!.companies.firstWhere((c) => c.primary, orElse: () => _userModel!.companies.first).name}',
@@ -162,11 +173,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ),
                     ],
-                    
+
                     const SizedBox(height: 20),
                   ] else
                     const SizedBox(height: 40),
-                  
+
                   // Go to AGiXT button
                   ElevatedButton.icon(
                     onPressed: _openAGiXTWeb,
@@ -180,9 +191,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       minimumSize: const Size(double.infinity, 0),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 16),
-                  
+
                   // Logout button
                   OutlinedButton.icon(
                     onPressed: _logout,

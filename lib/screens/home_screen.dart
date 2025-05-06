@@ -8,6 +8,7 @@ import 'package:agixt/screens/settings_screen.dart';
 import 'package:agixt/services/ai_service.dart';
 import 'package:agixt/utils/ui_perfs.dart';
 import 'package:agixt/widgets/current_agixt.dart';
+import 'package:agixt/widgets/gravatar_image.dart';
 import 'package:flutter/material.dart';
 import '../services/bluetooth_manager.dart';
 
@@ -22,7 +23,7 @@ class _HomePageState extends State<HomePage> {
   final BluetoothManager bluetoothManager = BluetoothManager();
   final AIService aiService = AIService();
   final UiPerfs _ui = UiPerfs.singleton;
-  
+
   String? _userEmail;
   bool _isLoggedIn = true;
   bool _isSideButtonListenerAttached = false;
@@ -37,18 +38,18 @@ class _HomePageState extends State<HomePage> {
   Future<void> _loadUserDetails() async {
     final email = await AuthService.getEmail();
     final isLoggedIn = await AuthService.isLoggedIn();
-    
+
     setState(() {
       _userEmail = email;
       _isLoggedIn = isLoggedIn;
     });
-    
+
     // Redirect to login if not logged in
     if (!_isLoggedIn && mounted) {
       Navigator.of(context).pushReplacementNamed('/login');
     }
   }
-  
+
   void _setupBluetoothListeners() {
     // Wait until the glasses are connected to attach the listener
     Future.delayed(const Duration(seconds: 2), () {
@@ -60,7 +61,7 @@ class _HomePageState extends State<HomePage> {
       }
     });
   }
-  
+
   void _attachSideButtonListener() {
     // Monitor for the side button press events from glasses
     if (bluetoothManager.rightGlass != null) {
@@ -70,14 +71,14 @@ class _HomePageState extends State<HomePage> {
       _isSideButtonListenerAttached = true;
     }
   }
-  
+
   Future<void> _handleSideButtonPress() async {
     // Check if user is logged in
     if (!await AuthService.isLoggedIn()) {
       bluetoothManager.sendText('Please log in to use AI assistant');
       return;
     }
-    
+
     // Handle the side button press to activate AI communications
     await aiService.handleSideButtonPress();
   }
@@ -88,13 +89,35 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(
         title: const Text('AGiXT'),
         actions: [
-          // Profile button
-          IconButton(
-            icon: const Icon(Icons.account_circle),
-            onPressed: () {
-              Navigator.pushNamed(context, '/profile');
-            },
-          ),
+          // Profile button with Gravatar
+          if (_userEmail != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const ProfileScreen()),
+                  );
+                },
+                child: GravatarImage(
+                  email: _userEmail!,
+                  size: 40,
+                ),
+              ),
+            )
+          else
+            IconButton(
+              icon: const Icon(Icons.account_circle),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const ProfileScreen()),
+                );
+              },
+            ),
           // Settings button
           IconButton(
             icon: const Icon(Icons.settings),
@@ -111,7 +134,7 @@ class _HomePageState extends State<HomePage> {
         padding: const EdgeInsets.all(16.0),
         children: [
           CurrentAGiXT(),
-          
+
           // AI Assistant Card
           Card(
             margin: const EdgeInsets.symmetric(vertical: 10.0),
@@ -151,7 +174,7 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ),
-          
+
           // Other menu items
           ListTile(
             title: Row(
@@ -212,8 +235,7 @@ class _HomePageState extends State<HomePage> {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                    builder: (context) => AGiXTChecklistPage()),
+                MaterialPageRoute(builder: (context) => AGiXTChecklistPage()),
               );
             },
           ),
