@@ -2,7 +2,6 @@ import 'package:agixt/widgets/glass_status.dart';
 import 'package:agixt/screens/settings/dashboard_screen.dart';
 import 'package:agixt/screens/settings/debug_screen.dart';
 import 'package:agixt/screens/settings/notifications_screen.dart';
-import 'package:agixt/screens/settings/whisper_screen.dart';
 import 'package:flutter/material.dart';
 
 class SettingsPage extends StatelessWidget {
@@ -22,7 +21,7 @@ class SettingsPage extends StatelessWidget {
               children: [
                 Icon(Icons.dashboard),
                 SizedBox(width: 10),
-                Text('G1 Dashboard'),
+                Text('Even Realities Settings'),
               ],
             ),
             trailing: Icon(Icons.chevron_right),
@@ -31,22 +30,6 @@ class SettingsPage extends StatelessWidget {
                 context,
                 MaterialPageRoute(
                     builder: (context) => DashboardSettingsPage()),
-              );
-            },
-          ),
-          ListTile(
-            title: Row(
-              children: [
-                Icon(Icons.mic),
-                SizedBox(width: 10),
-                Text('Whisper'),
-              ],
-            ),
-            trailing: Icon(Icons.chevron_right),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => WhisperSettingsPage()),
               );
             },
           ),
@@ -67,23 +50,6 @@ class SettingsPage extends StatelessWidget {
               );
             },
           ),
-          ListTile(
-            title: Row(
-              children: [
-                Icon(Icons.bug_report),
-                SizedBox(width: 10),
-                Text('Debug'),
-              ],
-            ),
-            trailing: Icon(Icons.chevron_right),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => DebugPage()),
-              );
-            },
-          ),
-        ],
       ),
     );
   }
