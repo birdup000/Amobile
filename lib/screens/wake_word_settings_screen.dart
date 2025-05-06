@@ -205,7 +205,8 @@ class _WakeWordSettingsScreenState extends State<WakeWordSettingsScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '"$_currentWakeWord, what\'s the weather today?"',
+                    // Removed weather example phrase
+                    '"$_currentWakeWord, tell me a joke."', // Replaced with a different example
                     style: const TextStyle(fontStyle: FontStyle.italic),
                   ),
                   Text(

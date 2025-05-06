@@ -3,7 +3,6 @@ import 'package:agixt/screens/settings/dashboard_screen.dart';
 import 'package:agixt/screens/settings/debug_screen.dart';
 import 'package:agixt/screens/settings/homeassistant_screen.dart';
 import 'package:agixt/screens/settings/notifications_screen.dart';
-import 'package:agixt/screens/settings/ui_settings.dart';
 import 'package:agixt/screens/settings/whisper_screen.dart';
 import 'package:agixt/screens/wake_word_settings_screen.dart';
 import 'package:flutter/material.dart';
@@ -84,22 +83,6 @@ class SettingsPage extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const WakeWordSettingsScreen()),
-              );
-            },
-          ),
-          ListTile(
-            title: Row(
-              children: [
-                Icon(Icons.brush),
-                SizedBox(width: 10),
-                Text('UI'),
-              ],
-            ),
-            trailing: Icon(Icons.chevron_right),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => UiSettingsPage()),
               );
             },
           ),

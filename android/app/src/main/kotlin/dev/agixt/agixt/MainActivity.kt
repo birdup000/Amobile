@@ -18,9 +18,11 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import android.net.Uri
 import android.util.Log
+import android.view.KeyEvent // Import KeyEvent
 
 class MainActivity: FlutterActivity() {
     private val CHANNEL = "dev.agixt.agixt/channel"
+    private val BUTTON_EVENTS_CHANNEL = "dev.agixt.agixt/button_events" // New channel for button events
     private val PERMISSION_REQUEST_CODE = 100
     private val TAG = "MainActivity"
     private var methodChannelInitialized = false
@@ -223,5 +225,30 @@ class MainActivity: FlutterActivity() {
             sendTokenToFlutter(token)
             pendingToken = null
         }
+        
+        // Setup the new channel for button events
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, BUTTON_EVENTS_CHANNEL).setMethodCallHandler { call, result ->
+            // Currently no methods expected from Flutter on this channel, but handler is needed
+            result.notImplemented()
+        }
+    }
+
+    // Override onKeyDown to handle physical button presses
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        Log.d(TAG, "Key pressed: $keyCode") // Log the key code for debugging
+        
+        // Check if it's the Assistant/Side button (adjust keyCode if needed for specific hardware)
+        // Common key codes: KEYCODE_ASSIST, KEYCODE_VOICE_ASSIST, KEYCODE_CAMERA, etc.
+        if (keyCode == KeyEvent.KEYCODE_ASSIST || keyCode == KeyEvent.KEYCODE_VOICE_ASSIST) {
+            Log.i(TAG, "Side button pressed, invoking Flutter method.")
+            // Send event to Flutter via MethodChannel
+            flutterEngine?.dartExecutor?.binaryMessenger?.let { messenger ->
+                MethodChannel(messenger, BUTTON_EVENTS_CHANNEL).invokeMethod("sideButtonPressed", null)
+            }
+            return true // Indicate that we've handled the event
+        }
+        
+        // For other keys, let the default system handling occur
+        return super.onKeyDown(keyCode, event)
     }
 }
