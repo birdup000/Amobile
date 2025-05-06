@@ -1,5 +1,4 @@
 import 'package:agixt/models/agixt/checklist.dart';
-import 'package:agixt/models/agixt/widgets/homassistant.dart';
 import 'package:agixt/models/g1/glass.dart';
 import 'package:agixt/models/g1/commands.dart';
 import 'package:agixt/models/g1/voice_note.dart';
@@ -162,7 +161,6 @@ class BluetoothReciever {
     return remoteUrl == null || remoteUrl.isEmpty;
   }
 
-
   Future<void> receiveHandler(GlassSide side, List<int> data) async {
     if (data.isEmpty) return;
 
@@ -224,14 +222,15 @@ class BluetoothReciever {
         if (await _isLocalTranscriptionEnabled()) {
           debugPrint('[$side] Using local speech_to_text');
           if (!_speechEnabled) {
-             debugPrint('Speech not enabled, attempting init...');
-             await _initSpeech(); // Ensure initialized (now returns Future<bool>)
+            debugPrint('Speech not enabled, attempting init...');
+            await _initSpeech(); // Ensure initialized (now returns Future<bool>)
           }
-          if (_speechEnabled) { // Start listening only if enabled
-             _startListening();
+          if (_speechEnabled) {
+            // Start listening only if enabled
+            _startListening();
           } else {
-             debugPrint('Speech could not be enabled, cannot start listener.');
-             // Optionally provide feedback to the user/device
+            debugPrint('Speech could not be enabled, cannot start listener.');
+            // Optionally provide feedback to the user/device
           }
           // We might still need to enable the glasses mic for the system recognizer
           await bt.setMicrophone(true);
@@ -255,7 +254,8 @@ class BluetoothReciever {
           voiceCollectorAI.isRecording = false;
           await bt.setMicrophone(false);
 
-          List<int> completeVoiceData = await voiceCollectorAI.getAllDataAndReset();
+          List<int> completeVoiceData =
+              await voiceCollectorAI.getAllDataAndReset();
           if (completeVoiceData.isEmpty) {
             debugPrint('[$side] No voice data collected for remote Whisper');
             return;
@@ -263,12 +263,15 @@ class BluetoothReciever {
           debugPrint(
               '[$side] Voice data collected for remote: ${completeVoiceData.length} bytes');
 
-          final pcm = await LC3.decodeLC3(Uint8List.fromList(completeVoiceData));
-          debugPrint('[$side] Voice data decoded for remote: ${pcm.length} bytes');
+          final pcm =
+              await LC3.decodeLC3(Uint8List.fromList(completeVoiceData));
+          debugPrint(
+              '[$side] Voice data decoded for remote: ${pcm.length} bytes');
 
           if (pcm.isEmpty) {
-             debugPrint('[$side] Decoded PCM data is empty, skipping transcription.');
-             return;
+            debugPrint(
+                '[$side] Decoded PCM data is empty, skipping transcription.');
+            return;
           }
 
           final startTime = DateTime.now();
@@ -288,8 +291,8 @@ class BluetoothReciever {
               debugPrint('[$side] Remote transcription was empty.');
             }
           } catch (e) {
-             debugPrint('[$side] Error during remote transcription: $e');
-             // Optionally send error message back to user/device
+            debugPrint('[$side] Error during remote transcription: $e');
+            // Optionally send error message back to user/device
           }
         }
         break;
@@ -311,16 +314,17 @@ class BluetoothReciever {
   }
 
   // Make this function async
-  Future<void> handleVoiceData(GlassSide side, int seq, List<int> voiceData) async {
+  Future<void> handleVoiceData(
+      GlassSide side, int seq, List<int> voiceData) async {
     debugPrint(
         '[$side] Received voice data chunk: seq=$seq, length=${voiceData.length}');
     // Only add to buffer if using remote whisper (i.e., local is NOT enabled)
     if (!await _isLocalTranscriptionEnabled() && voiceCollectorAI.isRecording) {
-       voiceCollectorAI.addChunk(seq, voiceData);
+      voiceCollectorAI.addChunk(seq, voiceData);
     } else if (await _isLocalTranscriptionEnabled()) {
-       // If local, we don't buffer here, speech_to_text uses the mic directly.
-       // The logic in handleEvenAICommand case 23/24 handles mic enabling/disabling.
-       // No action needed here for the voice data itself when using local STT.
+      // If local, we don't buffer here, speech_to_text uses the mic directly.
+      // The logic in handleEvenAICommand case 23/24 handles mic enabling/disabling.
+      // No action needed here for the voice data itself when using local STT.
     }
 
     // This check seems redundant now as stop command (24) handles mic disabling
