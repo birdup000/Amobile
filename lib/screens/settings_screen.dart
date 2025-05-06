@@ -1,7 +1,6 @@
 import 'package:agixt/widgets/glass_status.dart';
 import 'package:agixt/screens/settings/dashboard_screen.dart';
 import 'package:agixt/screens/settings/debug_screen.dart';
-import 'package:agixt/screens/settings/homeassistant_screen.dart';
 import 'package:agixt/screens/settings/notifications_screen.dart';
 import 'package:agixt/screens/settings/whisper_screen.dart';
 import 'package:agixt/screens/wake_word_settings_screen.dart';
@@ -39,23 +38,6 @@ class SettingsPage extends StatelessWidget {
           ListTile(
             title: Row(
               children: [
-                Icon(Icons.home),
-                SizedBox(width: 10),
-                Text('HomeAssistant'),
-              ],
-            ),
-            trailing: Icon(Icons.chevron_right),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => HomeAssistantSettingsPage()),
-              );
-            },
-          ),
-          ListTile(
-            title: Row(
-              children: [
                 Icon(Icons.mic),
                 SizedBox(width: 10),
                 Text('Whisper'),
@@ -82,7 +64,8 @@ class SettingsPage extends StatelessWidget {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const WakeWordSettingsScreen()),
+                MaterialPageRoute(
+                    builder: (context) => const WakeWordSettingsScreen()),
               );
             },
           ),
