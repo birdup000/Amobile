@@ -14,26 +14,6 @@ import UIKit
     if let controller = controller {
       FlutterBinaryMessengerRelay.shared.setBinaryMessenger(controller.binaryMessenger)
       
-      // Register method channel for wake word customization
-      let wakeWordChannel = FlutterMethodChannel(name: "dev.agixt.agixt/ios_wake_word", 
-                                               binaryMessenger: controller.binaryMessenger)
-      wakeWordChannel.setMethodCallHandler { (call, result) in
-        if call.method == "updateWakeWord" {
-          if let args = call.arguments as? [String: Any],
-             let wakeWord = args["wakeWord"] as? String {
-            // Update the wake word in SpeechStreamRecognizer
-            SpeechStreamRecognizer.shared.updateWakeWord(wakeWord)
-            result(true)
-          } else {
-            result(FlutterError(code: "INVALID_ARGUMENTS", 
-                              message: "Missing wakeWord parameter", 
-                              details: nil))
-          }
-        } else {
-          result(FlutterMethodNotImplemented)
-        }
-      }
-      
       // Register method channel for OAuth callback handling
       let oauthChannel = FlutterMethodChannel(name: "dev.agixt.agixt/oauth_callback", 
                                              binaryMessenger: controller.binaryMessenger)

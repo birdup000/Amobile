@@ -37,18 +37,6 @@ class SpeechStreamRecognizer {
     private var lastTranscription: SFTranscription? // cache to make contrast between near results
     private var cacheString = "" // cache stream recognized formattedString
     
-    private var wakeWord = "agent" // Changed default wake word to "agent"
-    
-    // Method to update the wake word
-    func updateWakeWord(_ newWakeWord: String) {
-        if !newWakeWord.isEmpty {
-            print("Updating wake word from '\(wakeWord)' to '\(newWakeWord)'")
-            wakeWord = newWakeWord
-            // Save to UserDefaults for persistence
-            UserDefaults.standard.set(newWakeWord, forKey: "AGiXTWakeWord")
-        }
-    }
-    
     enum RecognizerError: Error {
         case nilRecognizer
         case notAuthorizedToRecognize
@@ -67,13 +55,6 @@ class SpeechStreamRecognizer {
     
     private init() {
         dateFormatter.dateFormat = "HH:mm:ss.SSS"
-        
-        // Load custom wake word from UserDefaults if available
-        if let savedWakeWord = UserDefaults.standard.string(forKey: "AGiXTWakeWord"), !savedWakeWord.isEmpty {
-            wakeWord = savedWakeWord
-            print("Loaded custom wake word: \(wakeWord)")
-        }
-        
         if #available(iOS 13.0, *) {
             Task {
                 do {
@@ -134,17 +115,17 @@ class SpeechStreamRecognizer {
             if let error = error {
                 print("SpeechRecognizer Recognition error: \(error)")
             } else if let result = result {
-                let transcription = result.bestTranscription.formattedString
-                self.processTranscription(transcription)
-                
+                    
+                let currentTranscription = result.bestTranscription
                 if lastTranscription == nil {
-                    cacheString = result.bestTranscription.formattedString
+                    cacheString = currentTranscription.formattedString
                 } else {
-                    if (result.bestTranscription.segments.count < lastTranscription?.segments.count ?? 1 || result.bestTranscription.segments.count == 1) {
+                    
+                    if (currentTranscription.segments.count < lastTranscription?.segments.count ?? 1 || currentTranscription.segments.count == 1) {
                         self.lastRecognizedText += cacheString
                         cacheString = ""
                     } else {
-                        cacheString = result.bestTranscription.formattedString
+                        cacheString = currentTranscription.formattedString
                     }
                 }
                 
@@ -205,58 +186,6 @@ class SpeechStreamRecognizer {
             }
         }
     }
-    
-    func startWakeWordDetection() {
-        startRecognition(identifier: "EN")
-    }
-
-    func processTranscription(_ transcription: String) {
-        // Convert both transcription and wake word to lowercase for case-insensitive comparison
-        let lowercaseTranscription = transcription.lowercased()
-        let lowercaseWakeWord = wakeWord.lowercased()
-        
-        if lowercaseTranscription.contains(lowercaseWakeWord) {
-            triggerAGiXTWorkflow(transcription)
-        }
-    }
-
-    private func triggerAGiXTWorkflow(_ transcription: String) {
-        print("Wake word detected: \(transcription)")
-        
-        // Find wake word position case-insensitively
-        let lowercaseTranscription = transcription.lowercased()
-        let lowercaseWakeWord = wakeWord.lowercased()
-        
-        guard let range = lowercaseTranscription.range(of: lowercaseWakeWord) else {
-            print("Wake word not found in transcription after detection")
-            return
-        }
-        
-        // Calculate the end index in the original string
-        let wakeWordEndIndex = transcription.index(transcription.startIndex, offsetBy: lowercaseTranscription.distance(from: lowercaseTranscription.startIndex, to: range.upperBound))
-        
-        // Extract the command after the wake word
-        let commandText = String(transcription[wakeWordEndIndex...]).trimmingCharacters(in: .whitespacesAndNewlines)
-        
-        // Send command to AGiXT workflow via Flutter method channel
-        DispatchQueue.main.async {
-            let commandDict: [String: Any] = ["transcription": commandText]
-            BluetoothManager.shared.channel.invokeMethod("processVoiceCommand", arguments: commandDict)
-        }
-    }
-    
-    // Method to automatically start wake word detection when app starts
-    func autoStartWakeWordDetection() {
-        // Start continuous listening for wake word
-        startWakeWordDetection()
-        
-        // Setup timer to periodically restart recognition if it stops
-        Timer.scheduledTimer(withTimeInterval: 60.0, repeats: true) { [weak self] _ in
-            if self?.recognitionTask == nil {
-                self?.startWakeWordDetection()
-            }
-        }
-    }
 }
 
 extension SFSpeechRecognizer {
@@ -278,5 +207,4 @@ extension AVAudioSession {
         }
     }
 }
-
 

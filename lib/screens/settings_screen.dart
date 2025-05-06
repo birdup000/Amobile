@@ -2,7 +2,6 @@ import 'package:agixt/widgets/glass_status.dart';
 import 'package:agixt/screens/settings/dashboard_screen.dart';
 import 'package:agixt/screens/settings/debug_screen.dart';
 import 'package:agixt/screens/settings/notifications_screen.dart';
-import 'package:agixt/screens/settings/whisper_screen.dart';
 import 'package:agixt/widgets/gravatar_image.dart';
 import 'package:agixt/models/agixt/auth/auth.dart';
 import 'package:agixt/screens/auth/profile_screen.dart';
@@ -99,39 +98,6 @@ class _SettingsPageState extends State<SettingsPage> {
           ListTile(
             title: Row(
               children: [
-                Icon(Icons.dashboard),
-                SizedBox(width: 10),
-                Text('G1 Dashboard'),
-              ],
-            ),
-            trailing: Icon(Icons.chevron_right),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => DashboardSettingsPage()),
-              );
-            },
-          ),
-          ListTile(
-            title: Row(
-              children: [
-                Icon(Icons.mic),
-                SizedBox(width: 10),
-                Text('Whisper'),
-              ],
-            ),
-            trailing: Icon(Icons.chevron_right),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => WhisperSettingsPage()),
-              );
-            },
-          ),
-          ListTile(
-            title: Row(
-              children: [
                 Icon(Icons.notifications),
                 SizedBox(width: 10),
                 Text('App Notifications'),
@@ -149,16 +115,17 @@ class _SettingsPageState extends State<SettingsPage> {
           ListTile(
             title: Row(
               children: [
-                Icon(Icons.bug_report),
+                Icon(Icons.dashboard),
                 SizedBox(width: 10),
-                Text('Debug'),
+                Text('Time Settings'),
               ],
             ),
             trailing: Icon(Icons.chevron_right),
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => DebugPage()),
+                MaterialPageRoute(
+                    builder: (context) => DashboardSettingsPage()),
               );
             },
           ),
