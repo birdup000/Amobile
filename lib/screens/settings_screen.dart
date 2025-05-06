@@ -1,3 +1,4 @@
+import 'package:agixt/widgets/glass_status.dart';
 import 'package:agixt/screens/settings/dashboard_screen.dart';
 import 'package:agixt/screens/settings/debug_screen.dart';
 import 'package:agixt/screens/settings/homeassistant_screen.dart';
@@ -19,6 +20,7 @@ class SettingsPage extends StatelessWidget {
       ),
       body: ListView(
         children: [
+          GlassStatus(),
           ListTile(
             title: Row(
               children: [
