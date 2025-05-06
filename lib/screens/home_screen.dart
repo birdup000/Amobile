@@ -5,11 +5,9 @@ import 'package:agixt/screens/checklist_screen.dart';
 import 'package:agixt/screens/agixt_daily.dart';
 import 'package:agixt/screens/agixt_stop.dart';
 import 'package:agixt/screens/settings_screen.dart';
-import 'package:agixt/screens/transcribe_screen.dart';
 import 'package:agixt/services/ai_service.dart';
 import 'package:agixt/utils/ui_perfs.dart';
 import 'package:agixt/widgets/current_agixt.dart';
-import 'package:agixt/widgets/glass_status.dart';
 import 'package:flutter/material.dart';
 import '../services/bluetooth_manager.dart';
 
@@ -112,7 +110,6 @@ class _HomePageState extends State<HomePage> {
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
-          GlassStatus(),
           CurrentAGiXT(),
           
           // AI Assistant Card
@@ -238,27 +235,6 @@ class _HomePageState extends State<HomePage> {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => CalendarsPage()),
-              );
-            },
-          ),
-          ListTile(
-            title: Row(
-              children: [
-                _ui.trainNerdMode
-                    ? Image(
-                        image: AssetImage('assets/icons/gsmr.png'),
-                        height: 20,
-                      )
-                    : Icon(Icons.transcribe),
-                SizedBox(width: 10),
-                Text('Transcribe'),
-              ],
-            ),
-            trailing: Icon(Icons.chevron_right),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => TranscribeScreen()),
               );
             },
           ),

@@ -1,10 +1,8 @@
-import 'package:agixt/models/android/weather_data.dart';
 import 'package:agixt/models/agixt/auth/auth.dart';
 import 'package:agixt/models/g1/calendar.dart';
 import 'package:agixt/models/g1/dashboard.dart';
 import 'package:agixt/models/g1/note.dart';
 import 'package:agixt/models/g1/notification.dart';
-import 'package:agixt/models/g1/time_weather.dart';
 import 'package:agixt/models/g1/translate.dart';
 import 'package:agixt/services/bluetooth_manager.dart';
 import 'package:agixt/utils/bitmap.dart';
@@ -95,24 +93,6 @@ class _DebugPageSate extends State<DebugPage> {
     }
   }
 
-  void _sendBadApple() async {
-    if (bluetoothManager.isConnected) {
-      for (var i = 1; i < 6500; i += 60) {
-        // we have 0.5 fps so skipping some frames
-        try {
-          await bluetoothManager.sendBitmap(await generateBadAppleBMP(i));
-        } catch (e) {
-          debugPrint('Error sending frame: $e');
-        }
-        await Future.delayed(const Duration(milliseconds: 1000));
-      }
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Glasses are not connected')),
-      );
-    }
-  }
-
   void _sendNoteDemo() async {
     if (bluetoothManager.isConnected) {
       var note1 = Note(
@@ -137,32 +117,7 @@ class _DebugPageSate extends State<DebugPage> {
     }
   }
 
-  void _debugTimeCommand() async {
-    if (bluetoothManager.isConnected) {
-      int temp = 5;
-      int weatherIcon = WeatherIcons.SUNNY;
-
-      final weather = await WeatherProvider.getWeather();
-      if (weather != null) {
-        temp = (weather.currentTemp ?? 0) - 273; // currentTemp is in kelvin
-        weatherIcon = WeatherIcons.fromOpenWeatherMapConditionCode(
-            weather.currentConditionCode ?? 0);
-      }
-
-      await bluetoothManager.sendCommandToGlasses(
-        TimeAndWeather(
-          temperatureUnit: TemperatureUnit.CELSIUS,
-          timeFormat: TimeFormat.TWENTY_FOUR_HOUR,
-          temperatureInCelsius: temp,
-          weatherIcon: weatherIcon,
-        ).buildAddCommand(_seqId++),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Glasses are not connected')),
-      );
-    }
-  }
+  // Removed _debugTimeCommand as it relied on TimeAndWeather
 
   void _debugTranslateCommand() async {
     if (bluetoothManager.isConnected) {
@@ -333,19 +288,11 @@ class _DebugPageSate extends State<DebugPage> {
           ),
           const SizedBox(height: 20),
           ElevatedButton(
-            onPressed: _sendBadApple,
-            child: const Text("Send Bad Apple"),
-          ),
-          const SizedBox(height: 20),
-          ElevatedButton(
             onPressed: _testCalendar,
             child: const Text("Test Calendar"),
           ),
           const SizedBox(height: 20),
-          ElevatedButton(
-            onPressed: _debugTimeCommand,
-            child: const Text("Debug Time/Weather Command"),
-          ),
+          // Removed button for Debug Time/Weather Command
           const SizedBox(height: 20),
           ElevatedButton(
             onPressed: _debugTranslateCommand,

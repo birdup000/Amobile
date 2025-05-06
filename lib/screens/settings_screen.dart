@@ -1,11 +1,10 @@
+import 'package:agixt/widgets/glass_status.dart';
 import 'package:agixt/screens/settings/dashboard_screen.dart';
 import 'package:agixt/screens/settings/debug_screen.dart';
 import 'package:agixt/screens/settings/homeassistant_screen.dart';
 import 'package:agixt/screens/settings/notifications_screen.dart';
-import 'package:agixt/screens/settings/ui_settings.dart';
 import 'package:agixt/screens/settings/whisper_screen.dart';
 import 'package:agixt/screens/wake_word_settings_screen.dart';
-import 'package:agixt/widgets/about_dialog.dart';
 import 'package:flutter/material.dart';
 
 class SettingsPage extends StatelessWidget {
@@ -19,6 +18,7 @@ class SettingsPage extends StatelessWidget {
       ),
       body: ListView(
         children: [
+          GlassStatus(),
           ListTile(
             title: Row(
               children: [
@@ -89,22 +89,6 @@ class SettingsPage extends StatelessWidget {
           ListTile(
             title: Row(
               children: [
-                Icon(Icons.brush),
-                SizedBox(width: 10),
-                Text('UI'),
-              ],
-            ),
-            trailing: Icon(Icons.chevron_right),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => UiSettingsPage()),
-              );
-            },
-          ),
-          ListTile(
-            title: Row(
-              children: [
                 Icon(Icons.notifications),
                 SizedBox(width: 10),
                 Text('App Notifications'),
@@ -134,17 +118,6 @@ class SettingsPage extends StatelessWidget {
                 MaterialPageRoute(builder: (context) => DebugPage()),
               );
             },
-          ),
-          ListTile(
-            title: Row(
-              children: [
-                Icon(Icons.info),
-                SizedBox(width: 10),
-                Text('About'),
-              ],
-            ),
-            trailing: Icon(Icons.chevron_right),
-            onTap: () => showCustomAboutDialog(context),
           ),
         ],
       ),

@@ -1,5 +1,9 @@
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:agixt/models/g1/time_weather.dart';
+// Removed import for time_weather.dart
+import 'package:flutter/material.dart'; // Added missing import
+
+enum TimeFormat { TWELVE_HOUR, TWENTY_FOUR_HOUR } // Corrected enum values
+enum TemperatureUnit { CELSIUS, FAHRENHEIT } // Moved enum here
 
 class UiPerfs {
   static final UiPerfs singleton = UiPerfs._internal();
@@ -20,15 +24,10 @@ class UiPerfs {
   set temperatureUnit(TemperatureUnit value) => _setTemperatureUnit(value);
 
   // Default to 12-hour format
-  TimeFormat _timeFormat = TimeFormat.TWELVE_HOUR;
+  TimeFormat _timeFormat = TimeFormat.TWELVE_HOUR; // Corrected default
   TimeFormat get timeFormat => _timeFormat;
   set timeFormat(TimeFormat value) => _setTimeFormat(value);
 
-  // Weather Provider Preference
-  static const String _weatherProviderPackageNameKey = 'weatherProviderPackageName';
-  String _weatherProviderPackageName = '';
-  String get weatherProviderPackageName => _weatherProviderPackageName;
-  set weatherProviderPackageName(String value) => _setWeatherProviderPackageName(value);
 
   Future<void> load() async {
     final prefs = await SharedPreferences.getInstance();
@@ -42,8 +41,7 @@ class UiPerfs {
     final timeFormatIdx = prefs.getInt('timeFormat') ?? 0;
     _timeFormat = TimeFormat.values[timeFormatIdx];
 
-    // Load weather provider preference
-    _weatherProviderPackageName = prefs.getString(_weatherProviderPackageNameKey) ?? '';
+    // Removed loading weather provider preference
   }
 
   void _setTrainNerdMode(bool value) async {
@@ -64,9 +62,5 @@ class UiPerfs {
     prefs.setInt('timeFormat', value.index);
   }
 
-  void _setWeatherProviderPackageName(String value) async {
-    final prefs = await SharedPreferences.getInstance();
-    _weatherProviderPackageName = value;
-    prefs.setString(_weatherProviderPackageNameKey, value);
-  }
+  // Removed _setWeatherProviderPackageName
 }

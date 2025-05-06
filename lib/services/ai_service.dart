@@ -4,8 +4,12 @@ import 'package:agixt/models/agixt/widgets/agixt_chat.dart';
 import 'package:agixt/services/bluetooth_manager.dart';
 import 'package:agixt/services/whisper.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart'; // Import Services
 
 class AIService {
+  // MethodChannel for button events from native code
+  static const MethodChannel _buttonEventsChannel = MethodChannel('dev.agixt.agixt/button_events');
+  
   static final AIService singleton = AIService._internal();
   final BluetoothManager _bluetoothManager = BluetoothManager.singleton;
   WhisperService? _whisperService;
@@ -20,6 +24,20 @@ class AIService {
   
   AIService._internal() {
     _initWhisperService();
+    // Set up the method call handler for button events
+    _buttonEventsChannel.setMethodCallHandler(_handleButtonEvents);
+  }
+  
+  // Handle method calls from the button events channel
+  Future<void> _handleButtonEvents(MethodCall call) async {
+    switch (call.method) {
+      case 'sideButtonPressed':
+        debugPrint('Side button press event received from native code.');
+        await handleSideButtonPress();
+        break;
+      default:
+        debugPrint('Unknown method call from button events channel: ${call.method}');
+    }
   }
   
   // Initialize the WhisperService using the factory method
