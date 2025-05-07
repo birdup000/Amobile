@@ -5,6 +5,7 @@ import 'package:agixt/screens/settings/notifications_screen.dart';
 import 'package:agixt/widgets/gravatar_image.dart';
 import 'package:agixt/models/agixt/auth/auth.dart';
 import 'package:agixt/screens/auth/profile_screen.dart';
+import 'package:agixt/screens/calendars_screen.dart';
 import 'package:flutter/material.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -126,6 +127,22 @@ class _SettingsPageState extends State<SettingsPage> {
                 context,
                 MaterialPageRoute(
                     builder: (context) => DashboardSettingsPage()),
+              );
+            },
+          ),
+          ListTile(
+            title: Row(
+              children: [
+                Icon(Icons.calendar_today),
+                SizedBox(width: 10),
+                Text('Calendar Integration'),
+              ],
+            ),
+            trailing: Icon(Icons.chevron_right),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => CalendarsPage()),
               );
             },
           ),

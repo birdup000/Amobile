@@ -178,21 +178,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ] else
                     const SizedBox(height: 40),
 
-                  // Go to AGiXT button
-                  ElevatedButton.icon(
-                    onPressed: _openAGiXTWeb,
-                    icon: const Icon(Icons.open_in_browser),
-                    label: Text('Go to $appName'),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 16,
-                        horizontal: 24,
-                      ),
-                      minimumSize: const Size(double.infinity, 0),
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
 
                   // Logout button
                   OutlinedButton.icon(

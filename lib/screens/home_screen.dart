@@ -10,6 +10,7 @@ import 'package:agixt/utils/ui_perfs.dart';
 import 'package:agixt/widgets/current_agixt.dart';
 import 'package:agixt/widgets/gravatar_image.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../services/bluetooth_manager.dart';
 
 class HomePage extends StatefulWidget {
@@ -100,8 +101,19 @@ class _HomePageState extends State<HomePage> {
     await aiService.handleSideButtonPress();
   }
 
+  Future<void> _openAGiXTWeb() async {
+    final url = await AuthService.getWebUrlWithToken();
+    final uri = Uri.parse(url);
+
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final appName = AuthService.appName;
+    
     return Scaffold(
       appBar: AppBar(
         title: const Text('AGiXT'),
@@ -150,6 +162,7 @@ class _HomePageState extends State<HomePage> {
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
+          // Current AGiXT info
           CurrentAGiXT(),
 
           // AI Assistant Card
@@ -192,7 +205,47 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
 
-          // Other menu items
+          // Go to AGiXT Web button
+          Card(
+            margin: const EdgeInsets.symmetric(vertical: 10.0),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.open_in_browser, color: Theme.of(context).primaryColor),
+                      const SizedBox(width: 10),
+                      const Text(
+                        'AGiXT Web Interface',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'Access the full AGiXT web interface in your browser.',
+                    style: TextStyle(fontSize: 14),
+                  ),
+                  const SizedBox(height: 15),
+                  ElevatedButton.icon(
+                    onPressed: _openAGiXTWeb,
+                    icon: const Icon(Icons.open_in_browser),
+                    label: Text('Go to $appName'),
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: const Size(double.infinity, 44),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // Daily items
           ListTile(
             title: Row(
               children: [
@@ -214,6 +267,8 @@ class _HomePageState extends State<HomePage> {
               );
             },
           ),
+          
+          // Stop items
           ListTile(
             title: Row(
               children: [
@@ -235,6 +290,8 @@ class _HomePageState extends State<HomePage> {
               );
             },
           ),
+          
+          // Checklists
           ListTile(
             title: Row(
               children: [
@@ -253,27 +310,6 @@ class _HomePageState extends State<HomePage> {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => AGiXTChecklistPage()),
-              );
-            },
-          ),
-          ListTile(
-            title: Row(
-              children: [
-                _ui.trainNerdMode
-                    ? Image(
-                        image: AssetImage('assets/icons/groen.png'),
-                        height: 20,
-                      )
-                    : Icon(Icons.calendar_today),
-                SizedBox(width: 10),
-                Text('Calendar Integration'),
-              ],
-            ),
-            trailing: Icon(Icons.chevron_right),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => CalendarsPage()),
               );
             },
           ),
