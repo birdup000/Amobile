@@ -36,7 +36,7 @@ class _HomePageState extends State<HomePage> {
   WebViewController? _webViewController;
   bool _isWebViewLoaded = false;
   // WebView is now shown by default
-  bool _showWebView = true;
+  final bool _showWebView = true;
 
   @override
   void initState() {
@@ -55,7 +55,7 @@ class _HomePageState extends State<HomePage> {
         _userEmail = email;
         _isLoggedIn = isLoggedIn;
       });
-      
+
       // For debugging
       print("User email: $_userEmail");
       print("Is logged in: $_isLoggedIn");
@@ -122,29 +122,29 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _initializeWebView() async {
     if (!_isLoggedIn) return;
-    
+
     // Get the URL with authentication token
     final webUrl = await AuthService.getWebUrlWithToken();
-    
+
     // Create a CookieManager instance
     final cookieManager = CookieManager();
-    
+
     // Check if we have a previous conversation ID to restore
     final lastConversationId = await cookieManager.getAgixtConversationId();
-    
+
     // Determine the URL to load
     String urlToLoad;
     if (lastConversationId != null && lastConversationId != "-") {
       // Navigate to the previous conversation if available
       final uri = Uri.parse(webUrl);
-      urlToLoad = uri.replace(path: '/chat/${lastConversationId}').toString();
+      urlToLoad = uri.replace(path: '/chat/$lastConversationId').toString();
       debugPrint('Navigating to previous conversation: $urlToLoad');
     } else {
       // Otherwise, just go to the main chat page
       final uri = Uri.parse(webUrl);
       urlToLoad = uri.replace(path: '/chat').toString();
     }
-    
+
     // Initialize the WebView controller
     _webViewController = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
@@ -154,7 +154,7 @@ class _HomePageState extends State<HomePage> {
             setState(() {
               _isWebViewLoaded = true;
             });
-            
+
             // Extract conversation ID from URL and agent cookie
             _extractConversationIdAndAgentInfo(url);
           },
@@ -167,24 +167,24 @@ class _HomePageState extends State<HomePage> {
       )
       ..loadRequest(Uri.parse(urlToLoad));
   }
-  
+
   // Extract the conversation ID from URL and agent cookie from WebView
   Future<void> _extractConversationIdAndAgentInfo(String url) async {
     if (_webViewController == null) return;
-    
+
     try {
       // Extract conversation ID from URL path if it contains '/chat/'
       if (url.contains('/chat/')) {
         final uri = Uri.parse(url);
         final pathSegments = uri.pathSegments;
-        
+
         // Find the index of 'chat' in the path segments
         final chatIndex = pathSegments.indexOf('chat');
-        
+
         // If 'chat' is found and there's a segment after it, that's our conversation ID
         if (chatIndex >= 0 && chatIndex < pathSegments.length - 1) {
           final conversationId = pathSegments[chatIndex + 1];
-          
+
           if (conversationId.isNotEmpty) {
             // Store the conversation ID
             final cookieManager = CookieManager();
@@ -193,7 +193,7 @@ class _HomePageState extends State<HomePage> {
           }
         }
       }
-      
+
       // Using JavaScript to extract the agixt-agent cookie
       final agentCookieScript = '''
       (function() {
@@ -207,10 +207,14 @@ class _HomePageState extends State<HomePage> {
         return '';
       })()
       ''';
-      
-      final agentCookieValue = await _webViewController!.runJavaScriptReturningResult(agentCookieScript) as String?;
-      
-      if (agentCookieValue != null && agentCookieValue.isNotEmpty && agentCookieValue != 'null' && agentCookieValue != '""') {
+
+      final agentCookieValue = await _webViewController!
+          .runJavaScriptReturningResult(agentCookieScript) as String?;
+
+      if (agentCookieValue != null &&
+          agentCookieValue.isNotEmpty &&
+          agentCookieValue != 'null' &&
+          agentCookieValue != '""') {
         // Store the agent cookie using our CookieManager
         final cookieManager = CookieManager();
         await cookieManager.saveAgixtAgentCookie(agentCookieValue);
@@ -222,7 +226,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   @override
-  Widget build(BuildContext context) {    
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(AuthService.appName),
@@ -278,7 +282,7 @@ class _HomePageState extends State<HomePage> {
         child: CircularProgressIndicator(),
       );
     }
-    
+
     return Column(
       children: [
         Expanded(

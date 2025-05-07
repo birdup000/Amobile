@@ -1,9 +1,15 @@
 import 'dart:convert';
 import 'package:agixt/models/agixt/auth/auth.dart';
+import 'package:agixt/models/agixt/calendar.dart';
+import 'package:agixt/models/agixt/checklist.dart';
+import 'package:agixt/models/agixt/daily.dart';
 import 'package:agixt/models/agixt/widgets/agixt_widget.dart';
 import 'package:agixt/models/g1/note.dart';
 import 'package:agixt/services/cookie_manager.dart';
+import 'package:device_calendar/device_calendar.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -59,15 +65,26 @@ class AGiXTChatWidget implements AGiXTWidget {
 
       // Get the conversation ID from URL or use "-" as default
       final cookieManager = CookieManager();
-      final conversationId = await cookieManager.getAgixtConversationId() ?? "-";
-      
+      final conversationId =
+          await cookieManager.getAgixtConversationId() ?? "-";
+
       debugPrint('Using conversation ID: $conversationId');
 
-      // Create chat request
-      final requestBody = {
+      // Create chat request with context if available
+      String finalMessage = message;
+      final contextData = await _buildContextData();
+      if (contextData.isNotEmpty) {
+        debugPrint('Adding context data to user message');
+      }
+
+      final Map<String, dynamic> requestBody = {
         "model": await _getAgentName(),
         "messages": [
-          {"role": "user", "content": message}
+          {
+            "role": "user", 
+            "content": message,
+            if (contextData.isNotEmpty) "context": contextData
+          }
         ],
         "user": conversationId // Use the conversation ID from URL for the user field
       };
@@ -84,14 +101,14 @@ class AGiXTChatWidget implements AGiXTWidget {
 
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
-        if (jsonResponse['choices'] != null && 
+        if (jsonResponse['choices'] != null &&
             jsonResponse['choices'].isNotEmpty &&
             jsonResponse['choices'][0]['message'] != null) {
           final answer = jsonResponse['choices'][0]['message']['content'];
-          
+
           // Save this interaction for future reference
           await _saveInteraction(message, answer);
-          
+
           return answer;
         }
       } else if (response.statusCode == 401) {
@@ -99,11 +116,132 @@ class AGiXTChatWidget implements AGiXTWidget {
         await AuthService.logout();
         return "Authentication expired. Please login again.";
       }
-      
+
       return "Sorry, I couldn't get a response at this time.";
     } catch (e) {
       debugPrint('AGiXT Chat error: $e');
       return "An error occurred while connecting to AGiXT.";
+    }
+  }
+
+  // Build context data containing today's daily items, active checklists, and calendar items
+  Future<String> _buildContextData() async {
+    List<String> contextSections = [];
+    contextSections.add("The users message is transcribed from voice to text.");
+
+    // Get today's daily items
+    final dailyItems = await _getTodaysDailyItems();
+    if (dailyItems.isNotEmpty) {
+      contextSections.add("### Users items for today\n\n$dailyItems");
+    }
+
+    // Get user's current active checklist tasks
+    final currentTasks = await _getCurrentChecklistTasks();
+    if (currentTasks.isNotEmpty) {
+      contextSections.add("### Users current task\n\n$currentTasks");
+    }
+
+    // Get today's calendar items
+    final calendarItems = await _getTodaysCalendarItems();
+    if (calendarItems.isNotEmpty) {
+      contextSections.add("### Users calendar items for today\n\n$calendarItems");
+    }
+
+    return contextSections.join("\n\n");
+  }
+
+  // Get formatted list of today's daily items
+  Future<String> _getTodaysDailyItems() async {
+    try {
+      final agixtDailyBox = Hive.box<AGiXTDailyItem>('agixtDailyBox');
+      if (agixtDailyBox.isEmpty) return '';
+
+      final items = agixtDailyBox.values.toList();
+      items.sort((a, b) {
+        if (a.hour == null || a.minute == null) return 1;
+        if (b.hour == null || b.minute == null) return -1;
+        return TimeOfDay(hour: a.hour!, minute: a.minute!)
+            .compareTo(TimeOfDay(hour: b.hour!, minute: b.minute!));
+      });
+
+      return items.map((item) => 
+        "${item.hour?.toString().padLeft(2, '0') ?? '--'}:${item.minute?.toString().padLeft(2, '0') ?? '--'} ${item.title}"
+      ).join('\n');
+    } catch (e) {
+      debugPrint('Error fetching daily items: $e');
+      return '';
+    }
+  }
+
+  // Get formatted list of active checklist tasks
+  Future<String> _getCurrentChecklistTasks() async {
+    try {
+      final checklistBox = Hive.box<AGiXTChecklist>('agixtChecklistBox');
+      if (checklistBox.isEmpty) return '';
+
+      final checklists = checklistBox.values.where((list) => list.isShown).toList();
+      if (checklists.isEmpty) return '';
+
+      List<String> result = [];
+      for (var checklist in checklists) {
+        if (checklist.items.isEmpty) continue;
+        
+        result.add("${checklist.name}:");
+        checklist.items.forEach((item) {
+          result.add("- ${item.title}");
+        });
+      }
+
+      return result.join('\n');
+    } catch (e) {
+      debugPrint('Error fetching checklist tasks: $e');
+      return '';
+    }
+  }
+
+  // Get formatted list of today's calendar items
+  Future<String> _getTodaysCalendarItems() async {
+    try {
+      final now = DateTime.now();
+      final calendarBox = Hive.box<AGiXTCalendar>('agixtCalendarBox');
+      if (calendarBox.isEmpty) return '';
+
+      final enabledCalendars = calendarBox.values.where((cal) => cal.enabled).toList();
+      if (enabledCalendars.isEmpty) return '';
+      
+      final deviceCal = DeviceCalendarPlugin();
+      List<String> calendarEvents = [];
+
+      for (var calendar in enabledCalendars) {
+        final events = await deviceCal.retrieveEvents(
+          calendar.id,
+          RetrieveEventsParams(
+            startDate: DateTime(now.year, now.month, now.day),
+            endDate: DateTime(now.year, now.month, now.day, 23, 59, 59),
+          ),
+        );
+
+        if (events.data != null && events.data!.isNotEmpty) {
+          for (var event in events.data!) {
+            if (event.start != null) {
+              final start = event.start!.toLocal();
+              final end = event.end?.toLocal();
+              final timeStr = end != null 
+                ? "${start.hour.toString().padLeft(2, '0')}:${start.minute.toString().padLeft(2, '0')} - ${end.hour.toString().padLeft(2, '0')}:${end.minute.toString().padLeft(2, '0')}"
+                : "${start.hour.toString().padLeft(2, '0')}:${start.minute.toString().padLeft(2, '0')}";
+              
+              calendarEvents.add("$timeStr ${event.title ?? 'Untitled event'}${event.location != null && event.location!.isNotEmpty ? ' at ${event.location}' : ''}");
+            }
+          }
+        }
+      }
+
+      // Sort events by time
+      calendarEvents.sort();
+      return calendarEvents.join('\n');
+    } catch (e) {
+      debugPrint('Error fetching calendar items: $e');
+      return '';
     }
   }
 

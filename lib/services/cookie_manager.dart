@@ -4,16 +4,16 @@ import 'package:flutter/foundation.dart';
 class CookieManager {
   static const String _agixtConversationKey = 'agixt_conversation_id';
   static const String _agixtAgentKey = 'agixt_agent_cookie';
-  
+
   // Singleton instance
   static final CookieManager _instance = CookieManager._internal();
-  
+
   factory CookieManager() {
     return _instance;
   }
-  
+
   CookieManager._internal();
-  
+
   // Save the conversation ID extracted from URL
   Future<void> saveAgixtConversationId(String conversationId) async {
     try {
@@ -24,7 +24,7 @@ class CookieManager {
       debugPrint('Error saving agixt conversation ID: $e');
     }
   }
-  
+
   // Retrieve the conversation ID
   Future<String?> getAgixtConversationId() async {
     try {
@@ -35,7 +35,7 @@ class CookieManager {
       return null;
     }
   }
-  
+
   // Clear the conversation ID
   Future<void> clearAgixtConversationId() async {
     try {
@@ -46,7 +46,7 @@ class CookieManager {
       debugPrint('Error clearing agixt conversation ID: $e');
     }
   }
-  
+
   // Save the agixt-agent cookie
   Future<void> saveAgixtAgentCookie(String cookieValue) async {
     try {
@@ -57,7 +57,7 @@ class CookieManager {
       debugPrint('Error saving agixt-agent cookie: $e');
     }
   }
-  
+
   // Retrieve the agixt-agent cookie
   Future<String?> getAgixtAgentCookie() async {
     try {
