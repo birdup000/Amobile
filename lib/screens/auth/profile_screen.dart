@@ -9,6 +9,7 @@ import 'package:agixt/screens/agixt_stop.dart';
 import 'package:agixt/screens/checklist_screen.dart';
 import 'package:agixt/services/ai_service.dart';
 import 'package:agixt/services/bluetooth_manager.dart';
+import 'package:agixt/services/cookie_manager.dart'; // Add CookieManager import
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -26,11 +27,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final UiPerfs _ui = UiPerfs.singleton;
   final BluetoothManager bluetoothManager = BluetoothManager();
   final AIService aiService = AIService();
+  
+  // Add variables for debugging AGiXT values
+  String? _currentAgent;
+  String? _currentConversationId;
 
   @override
   void initState() {
     super.initState();
     _loadUserData();
+    _loadAGiXTDebugInfo(); // Add call to load AGiXT debug info
   }
 
   Future<void> _loadUserData() async {
@@ -56,6 +62,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
       _isLoading = false;
     });
+  }
+
+  // Method to load AGiXT debug information
+  Future<void> _loadAGiXTDebugInfo() async {
+    final cookieManager = CookieManager();
+    
+    // Get the current agent from cookie manager
+    final agent = await cookieManager.getAgixtAgentCookie();
+    
+    // Get the current conversation ID from cookie manager
+    final conversationId = await cookieManager.getAgixtConversationId();
+    
+    if (mounted) {
+      setState(() {
+        _currentAgent = agent ?? 'Not set';
+        _currentConversationId = conversationId ?? 'Not set';
+      });
+    }
   }
 
   Future<void> _logout() async {
@@ -267,6 +291,82 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   // Current AGiXT info
                   CurrentAGiXT(),
+                  
+                  // Debug Info Card - Show current agent and conversation ID
+                  Card(
+                    margin: const EdgeInsets.symmetric(vertical: 10.0),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.bug_report, color: Colors.orange),
+                              const SizedBox(width: 10),
+                              const Text(
+                                'Debug Information',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          
+                          // Current Agent
+                          Row(
+                            children: [
+                              const Icon(Icons.smart_toy, size: 18, color: Colors.blue),
+                              const SizedBox(width: 8),
+                              const Text(
+                                'Current Agent:',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  _currentAgent ?? 'Not set',
+                                  style: const TextStyle(fontFamily: 'monospace'),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.refresh, size: 18),
+                                onPressed: _loadAGiXTDebugInfo,
+                                tooltip: 'Refresh',
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                              ),
+                            ],
+                          ),
+                          
+                          const SizedBox(height: 8),
+                          
+                          // Current Conversation ID
+                          Row(
+                            children: [
+                              const Icon(Icons.chat, size: 18, color: Colors.green),
+                              const SizedBox(width: 8),
+                              const Text(
+                                'Conversation ID:',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  _currentConversationId ?? 'Not set',
+                                  style: const TextStyle(fontFamily: 'monospace'),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
 
                   // Feature Navigation Section
                   Card(
