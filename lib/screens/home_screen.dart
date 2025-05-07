@@ -45,6 +45,7 @@ class _HomePageState extends State<HomePage> {
     _loadUserDetails();
     _setupBluetoothListeners();
     _initializeWebView();
+    _ensureConversationId(); // Ensure a conversation ID exists at startup
   }
 
   Future<void> _loadUserDetails() async {
@@ -201,7 +202,14 @@ class _HomePageState extends State<HomePage> {
             final chatWidget = AGiXTChatWidget();
             await chatWidget.updateConversationIdFromUrl(url);
           }
+        } else {
+          // Handle case where we're on the /chat/ page but no specific conversation ID
+          // Try to get the existing conversation ID or generate a new one
+          _ensureConversationId();
         }
+      } else {
+        // If we're not on a chat page at all, ensure we have a default conversation ID
+        _ensureConversationId();
       }
 
       // Using improved JavaScript to extract the agixt-agent cookie
@@ -259,6 +267,32 @@ class _HomePageState extends State<HomePage> {
     } catch (e) {
       debugPrint('Error extracting conversation ID or agent info: $e');
     }
+  }
+  
+  // Ensure we have a valid conversation ID
+  Future<void> _ensureConversationId() async {
+    try {
+      final cookieManager = CookieManager();
+      final existingId = await cookieManager.getAgixtConversationId();
+      
+      // If we don't have a conversation ID or it's invalid, generate a new one
+      if (existingId == null || existingId.isEmpty || existingId == 'Not set') {
+        final newId = _generateConversationId();
+        await cookieManager.saveAgixtConversationId(newId);
+        debugPrint('Generated and saved new conversation ID: $newId');
+      } else {
+        debugPrint('Using existing conversation ID: $existingId');
+      }
+    } catch (e) {
+      debugPrint('Error ensuring conversation ID: $e');
+    }
+  }
+  
+  // Generate a new conversation ID
+  String _generateConversationId() {
+    final timestamp = DateTime.now().millisecondsSinceEpoch.toString();
+    final random = (1000 + DateTime.now().microsecond % 9000).toString();
+    return 'conv-$timestamp-$random';
   }
   
   // Retry extracting agent info after a delay

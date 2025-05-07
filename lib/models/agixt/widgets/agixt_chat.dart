@@ -275,6 +275,8 @@ class AGiXTChatWidget implements AGiXTWidget {
   // Update the conversation ID when the URL changes
   Future<void> updateConversationIdFromUrl(String url) async {
     try {
+      debugPrint('Updating conversation ID from URL: $url');
+      
       // Check if the URL contains a chat path with conversation ID
       if (url.contains('/chat/')) {
         // Extract the conversation ID from the URL
@@ -284,16 +286,44 @@ class AGiXTChatWidget implements AGiXTWidget {
         if (match != null && match.groupCount >= 1) {
           final conversationId = match.group(1)!;
           
+          debugPrint('Found conversation ID in URL pattern: $conversationId');
+          
           // If we have a valid conversation ID, save it
           if (conversationId.isNotEmpty) {
             final cookieManager = CookieManager();
             await cookieManager.saveAgixtConversationId(conversationId);
             debugPrint('Updated conversation ID from URL: $conversationId');
           }
+        } else {
+          debugPrint('No conversation ID found in URL pattern - ensuring default ID exists');
+          await _ensureConversationId();
         }
+      } else {
+        debugPrint('URL does not contain /chat/ path - ensuring default ID exists');
+        await _ensureConversationId();
       }
     } catch (e) {
       debugPrint('Error updating conversation ID from URL: $e');
+      // Ensure we still have a valid ID even if there was an error
+      await _ensureConversationId();
+    }
+  }
+  
+  // Ensure a valid conversation ID exists
+  Future<void> _ensureConversationId() async {
+    try {
+      final cookieManager = CookieManager();
+      final existingId = await cookieManager.getAgixtConversationId();
+      
+      if (existingId == null || existingId.isEmpty || existingId == 'Not set') {
+        final newId = _generateConversationId();
+        await cookieManager.saveAgixtConversationId(newId);
+        debugPrint('Generated new conversation ID: $newId');
+      } else {
+        debugPrint('Using existing conversation ID: $existingId');
+      }
+    } catch (e) {
+      debugPrint('Error ensuring conversation ID: $e');
     }
   }
 
