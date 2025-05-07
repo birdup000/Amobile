@@ -276,8 +276,20 @@ class AGiXTChatWidget implements AGiXTWidget {
     try {
       debugPrint('Updating conversation ID from URL: $url');
       
+      final uri = Uri.parse(url);
+      final pathSegments = uri.pathSegments;
+      
+      // Check if the URL is '/chat' exactly (without a trailing segment)
+      if (pathSegments.contains('chat') && 
+          (pathSegments.length == 1 || 
+          (pathSegments.length > 1 && pathSegments.last == 'chat'))) {
+        debugPrint('URL is exactly /chat - setting conversation ID to "-"');
+        final cookieManager = CookieManager();
+        await cookieManager.saveAgixtConversationId("-");
+        debugPrint('Set conversation ID to "-" for /chat URL');
+      }
       // Check if the URL contains a chat path with conversation ID
-      if (url.contains('/chat/')) {
+      else if (url.contains('/chat/')) {
         // Extract the conversation ID from the URL
         final RegExp regExp = RegExp(r'/chat/([a-zA-Z0-9-_]+)');
         final match = regExp.firstMatch(url);
