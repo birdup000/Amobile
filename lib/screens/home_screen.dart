@@ -146,7 +146,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {    
     return Scaffold(
       appBar: AppBar(
-        title: Text('AGiXT Chat'),
+        title: Text(AuthService.appName),
         actions: [
           // Profile button with Gravatar
           if (_userEmail != null)
