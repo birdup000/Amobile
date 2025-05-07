@@ -10,6 +10,7 @@ import 'package:agixt/screens/checklist_screen.dart';
 import 'package:agixt/services/ai_service.dart';
 import 'package:agixt/services/bluetooth_manager.dart';
 import 'package:agixt/services/cookie_manager.dart'; // Add CookieManager import
+import 'package:agixt/utils/app_events.dart'; // Import AppEvents for real-time updates
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -36,7 +37,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void initState() {
     super.initState();
     _loadUserData();
-    _loadAGiXTDebugInfo(); // Add call to load AGiXT debug info
+    _loadAGiXTDebugInfo();
+    
+    // Register a listener for data changes
+    AppEvents.addListener(_onDataChanged);
+  }
+  
+  @override
+  void dispose() {
+    // Remove the listener when the screen is disposed
+    AppEvents.removeListener(_onDataChanged);
+    super.dispose();
+  }
+  
+  // Handler for data change events
+  void _onDataChanged() {
+    debugPrint('Data change detected in ProfileScreen - refreshing debug info');
+    _loadAGiXTDebugInfo();
   }
 
   Future<void> _loadUserData() async {

@@ -8,6 +8,7 @@ import 'package:agixt/screens/agixt_stop.dart';
 import 'package:agixt/screens/settings_screen.dart';
 import 'package:agixt/services/ai_service.dart';
 import 'package:agixt/services/cookie_manager.dart';
+import 'package:agixt/utils/app_events.dart'; // Import AppEvents
 import 'package:agixt/utils/ui_perfs.dart';
 import 'package:agixt/widgets/current_agixt.dart';
 import 'package:agixt/widgets/gravatar_image.dart';
@@ -158,12 +159,26 @@ class _HomePageState extends State<HomePage> {
             });
 
             // Extract conversation ID from URL and agent cookie
-            _extractConversationIdAndAgentInfo(url);
+            await _extractConversationIdAndAgentInfo(url);
+
+            // Set up URL change observer using JavaScript
+            await _setupUrlChangeObserver();
+
+            // Set up agent selection observer
+            await _setupAgentSelectionObserver();
           },
           onNavigationRequest: (NavigationRequest request) {
+            debugPrint('Navigation request to: ${request.url}');
             // Extract conversation ID whenever navigation happens
             _extractConversationIdAndAgentInfo(request.url);
             return NavigationDecision.navigate;
+          },
+          onUrlChange: (UrlChange change) {
+            // This catches client-side navigation that might not trigger a full navigation request
+            debugPrint('URL changed to: ${change.url}');
+            if (change.url != null) {
+              _extractConversationIdAndAgentInfo(change.url!);
+            }
           },
         ),
       )
@@ -176,7 +191,7 @@ class _HomePageState extends State<HomePage> {
 
     try {
       debugPrint('Processing URL for extraction: $url');
-      
+
       // Extract conversation ID from URL path if it contains '/chat/'
       if (url.contains('/chat/')) {
         final uri = Uri.parse(url);
@@ -197,7 +212,7 @@ class _HomePageState extends State<HomePage> {
             final cookieManager = CookieManager();
             await cookieManager.saveAgixtConversationId(conversationId);
             debugPrint('Saved conversation ID directly: $conversationId');
-            
+
             // Also use the AGiXTChatWidget method as a backup
             final chatWidget = AGiXTChatWidget();
             await chatWidget.updateConversationIdFromUrl(url);
@@ -268,13 +283,13 @@ class _HomePageState extends State<HomePage> {
       debugPrint('Error extracting conversation ID or agent info: $e');
     }
   }
-  
+
   // Ensure we have a valid conversation ID
   Future<void> _ensureConversationId() async {
     try {
       final cookieManager = CookieManager();
       final existingId = await cookieManager.getAgixtConversationId();
-      
+
       // If we don't have a conversation ID, set it to "-" instead of generating one
       if (existingId == null || existingId.isEmpty || existingId == 'Not set') {
         await cookieManager.saveAgixtConversationId("-");
@@ -286,20 +301,20 @@ class _HomePageState extends State<HomePage> {
       debugPrint('Error ensuring conversation ID: $e');
     }
   }
-  
+
   // This method should not be used as we're not generating IDs anymore
   // Kept for reference but not called anywhere
   String _generateConversationId() {
     return "-"; // Return "-" instead of generating an ID
   }
-  
+
   // Retry extracting agent info after a delay
   Future<void> _extractAgentInfoRetry() async {
     if (_webViewController == null) return;
-    
+
     try {
       debugPrint('Retrying agent extraction...');
-      
+
       // Alternative JavaScript approach focused just on agent extraction
       final altAgentScript = '''
       (function() {
@@ -330,12 +345,12 @@ class _HomePageState extends State<HomePage> {
         }
       })()
       ''';
-      
+
       final agentValue = await _webViewController!
           .runJavaScriptReturningResult(altAgentScript) as String?;
-          
-      if (agentValue != null && 
-          agentValue.isNotEmpty && 
+
+      if (agentValue != null &&
+          agentValue.isNotEmpty &&
           agentValue != 'null' &&
           agentValue != '""') {
         final cookieManager = CookieManager();
@@ -345,6 +360,187 @@ class _HomePageState extends State<HomePage> {
     } catch (e) {
       debugPrint('Error in agent retry: $e');
     }
+  }
+
+  // Set up a JavaScript observer for URL changes (for SPA navigation that doesn't trigger native events)
+  Future<void> _setupUrlChangeObserver() async {
+    if (_webViewController == null) return;
+
+    try {
+      // JavaScript to observe URL changes and call our handling function
+      final urlObserverScript = '''
+      (function() {
+        // Check if we've already set up the observer
+        if (window._agixtUrlObserverSetup) return;
+        
+        // Track the last URL we've seen
+        let lastUrl = window.location.href;
+        
+        // Create a function to check for URL changes
+        function checkUrlChange() {
+          if (lastUrl !== window.location.href) {
+            console.log('URL changed from JS observer:', window.location.href);
+            lastUrl = window.location.href;
+            
+            // Call the Flutter handler
+            window.flutter_inappwebview.callHandler('onUrlChange', lastUrl);
+          }
+        }
+        
+        // Set a regular interval to check for changes
+        setInterval(checkUrlChange, 300);
+        
+        // Also monitor History API
+        const originalPushState = history.pushState;
+        const originalReplaceState = history.replaceState;
+        
+        history.pushState = function() {
+          originalPushState.apply(this, arguments);
+          checkUrlChange();
+        };
+        
+        history.replaceState = function() {
+          originalReplaceState.apply(this, arguments);
+          checkUrlChange();
+        };
+        
+        // Mark as set up
+        window._agixtUrlObserverSetup = true;
+        
+        console.log('AGiXT URL observer initialized');
+      })();
+      ''';
+
+      await _webViewController!.runJavaScript(urlObserverScript);
+
+      // Add JavaScript handler
+      await _webViewController!.addJavaScriptChannel(
+        'onUrlChange',
+        onMessageReceived: (JavaScriptMessage message) {
+          debugPrint('URL change from JS: ${message.message}');
+          _extractConversationIdAndAgentInfo(message.message);
+        },
+      );
+
+      debugPrint('URL change observer setup complete');
+    } catch (e) {
+      debugPrint('Error setting up URL observer: $e');
+    }
+  }
+
+  // Set up a JavaScript observer for agent selection changes
+  Future<void> _setupAgentSelectionObserver() async {
+    if (_webViewController == null) return;
+
+    try {
+      // JavaScript to observe agent selection changes
+      final agentObserverScript = '''
+      (function() {
+        // Check if we've already set up the observer
+        if (window._agixtAgentObserverSetup) return;
+        
+        // Function to extract current agent
+        function extractCurrentAgent() {
+          try {
+            // Try cookie approach first
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+              const cookie = cookies[i].trim();
+              if (cookie.startsWith('agixt-agent=')) {
+                const value = cookie.substring('agixt-agent='.length);
+                if (value) return value;
+              }
+            }
+            
+            // Try DOM approaches
+            // Look for agent selector or any UI element that might contain the agent name
+            const selectors = [
+              '.agent-selector .selected',
+              '[data-agent]',
+              '.agent-name',
+              '.model-selector .selected',
+              '.dropdown-content button.selected'
+            ];
+            
+            for (const selector of selectors) {
+              const elements = document.querySelectorAll(selector);
+              for (let i = 0; i < elements.length; i++) {
+                const text = elements[i].textContent.trim();
+                if (text && text.length > 0 && text !== 'null') {
+                  return text;
+                }
+              }
+            }
+            
+            return '';
+          } catch (e) {
+            console.error('Error extracting agent:', e);
+            return '';
+          }
+        }
+        
+        // Set up click event listeners that might indicate agent change
+        document.addEventListener('click', function(e) {
+          // Wait a moment for the UI/cookie to update after a click
+          setTimeout(() => {
+            const agent = extractCurrentAgent();
+            if (agent) {
+              console.log('Agent may have changed to:', agent);
+              window.flutter_inappwebview.callHandler('onAgentChange', agent);
+            }
+          }, 300);
+        }, true);
+        
+        // Also check periodically
+        setInterval(() => {
+          const agent = extractCurrentAgent();
+          if (agent) {
+            window.flutter_inappwebview.callHandler('onAgentChange', agent);
+          }
+        }, 2000);
+        
+        // Mark as set up
+        window._agixtAgentObserverSetup = true;
+        
+        console.log('AGiXT agent observer initialized');
+      })();
+      ''';
+
+      await _webViewController!.runJavaScript(agentObserverScript);
+
+      // Add JavaScript handler
+      await _webViewController!.addJavaScriptChannel(
+        'onAgentChange',
+        onMessageReceived: (JavaScriptMessage message) {
+          if (message.message.isNotEmpty &&
+              message.message != 'null' &&
+              message.message != '""') {
+            debugPrint('Agent change from JS: ${message.message}');
+            _saveAgentValue(message.message);
+          }
+        },
+      );
+
+      debugPrint('Agent selection observer setup complete');
+    } catch (e) {
+      debugPrint('Error setting up agent observer: $e');
+    }
+  }
+
+  // Helper method to save agent value
+  Future<void> _saveAgentValue(String agentValue) async {
+    final cookieManager = CookieManager();
+    await cookieManager.saveAgixtAgentCookie(agentValue);
+    debugPrint('Saved agent value: $agentValue');
+
+    // Notify any listening screens to update
+    _notifyDataChange();
+  }
+
+  // Notify that data has changed so listening screens can update
+  void _notifyDataChange() {
+    // Using EventBus would be better, but we're keeping it simple with a static method
+    AppEvents.notifyDataChanged();
   }
 
   @override
