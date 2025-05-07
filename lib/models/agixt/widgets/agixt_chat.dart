@@ -63,10 +63,8 @@ class AGiXTChatWidget implements AGiXTWidget {
         return "Please login to use AGiXT chat.";
       }
 
-      // Get the conversation ID from URL or use "-" as default
-      final cookieManager = CookieManager();
-      final conversationId =
-          await cookieManager.getAgixtConversationId() ?? "-";
+      // Get the current URL to extract conversation ID
+      final conversationId = await _getCurrentConversationId();
 
       debugPrint('Using conversation ID: $conversationId');
 
@@ -242,6 +240,60 @@ class AGiXTChatWidget implements AGiXTWidget {
     } catch (e) {
       debugPrint('Error fetching calendar items: $e');
       return '';
+    }
+  }
+
+  // Extract and manage the conversation ID from the URL
+  Future<String> _getCurrentConversationId() async {
+    try {
+      // First check if we have a stored conversation ID
+      final cookieManager = CookieManager();
+      String? storedConversationId = await cookieManager.getAgixtConversationId();
+      
+      // Generate a new ID if we don't have one stored
+      if (storedConversationId == null || storedConversationId.isEmpty) {
+        final newConversationId = _generateConversationId();
+        await cookieManager.saveAgixtConversationId(newConversationId);
+        return newConversationId;
+      }
+      
+      return storedConversationId;
+    } catch (e) {
+      debugPrint('Error getting conversation ID: $e');
+      // Return a fallback ID if there's an error
+      return _generateConversationId();
+    }
+  }
+  
+  // Generate a new random conversation ID
+  String _generateConversationId() {
+    final timestamp = DateTime.now().millisecondsSinceEpoch.toString();
+    final random = (1000 + DateTime.now().microsecond % 9000).toString();
+    return 'conv-$timestamp-$random';
+  }
+  
+  // Update the conversation ID when the URL changes
+  Future<void> updateConversationIdFromUrl(String url) async {
+    try {
+      // Check if the URL contains a chat path with conversation ID
+      if (url.contains('/chat/')) {
+        // Extract the conversation ID from the URL
+        final RegExp regExp = RegExp(r'/chat/([a-zA-Z0-9-_]+)');
+        final match = regExp.firstMatch(url);
+        
+        if (match != null && match.groupCount >= 1) {
+          final conversationId = match.group(1)!;
+          
+          // If we have a valid conversation ID, save it
+          if (conversationId.isNotEmpty) {
+            final cookieManager = CookieManager();
+            await cookieManager.saveAgixtConversationId(conversationId);
+            debugPrint('Updated conversation ID from URL: $conversationId');
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Error updating conversation ID from URL: $e');
     }
   }
 

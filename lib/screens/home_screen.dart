@@ -1,4 +1,5 @@
 import 'package:agixt/models/agixt/auth/auth.dart';
+import 'package:agixt/models/agixt/widgets/agixt_chat.dart'; // Import AGiXTChatWidget
 import 'package:agixt/screens/auth/profile_screen.dart';
 import 'package:agixt/screens/calendars_screen.dart';
 import 'package:agixt/screens/checklist_screen.dart';
@@ -186,10 +187,10 @@ class _HomePageState extends State<HomePage> {
           final conversationId = pathSegments[chatIndex + 1];
 
           if (conversationId.isNotEmpty) {
-            // Store the conversation ID
-            final cookieManager = CookieManager();
-            await cookieManager.saveAgixtConversationId(conversationId);
-            debugPrint('Extracted conversation ID from URL: $conversationId');
+            // Use the AGiXTChatWidget to update the conversation ID
+            final chatWidget = AGiXTChatWidget();
+            await chatWidget.updateConversationIdFromUrl(url);
+            debugPrint('Updated conversation ID from URL using AGiXTChatWidget');
           }
         }
       }
