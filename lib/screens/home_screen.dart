@@ -192,12 +192,22 @@ class _HomePageState extends State<HomePage> {
     try {
       debugPrint('Processing URL for extraction: $url');
 
+      final uri = Uri.parse(url);
+      final pathSegments = uri.pathSegments;
+      debugPrint('Path segments: $pathSegments');
+      
+      // Check if the URL is '/chat' (exactly)
+      if (pathSegments.contains('chat') && 
+          (pathSegments.length == 1 || 
+          (pathSegments.length > 1 && pathSegments.last == 'chat'))) {
+        // Handle case when URL is just '/chat' without another '/'
+        debugPrint('URL is exactly /chat - setting conversation ID to "-"');
+        final cookieManager = CookieManager();
+        await cookieManager.saveAgixtConversationId("-");
+        debugPrint('Set conversation ID to "-" for /chat URL');
+      }
       // Extract conversation ID from URL path if it contains '/chat/'
-      if (url.contains('/chat/')) {
-        final uri = Uri.parse(url);
-        final pathSegments = uri.pathSegments;
-        debugPrint('Path segments: $pathSegments');
-
+      else if (url.contains('/chat/')) {
         // Find the index of 'chat' in the path segments
         final chatIndex = pathSegments.indexOf('chat');
         debugPrint('Chat index in path: $chatIndex');
