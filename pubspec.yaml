@@ -67,6 +67,7 @@ dependencies:
   speech_to_text: ^7.0.2  # Upgrading to latest version that supports Flutter v2 embedding
   # flutter_sound for audio recording (doesn't rely on ffmpeg)
   flutter_sound: ^9.2.13
+  webview_flutter: ^4.11.0
 
 dev_dependencies:
   flutter_test:

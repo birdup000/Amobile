@@ -65,7 +65,7 @@ class GlassStatusState extends State<GlassStatus> {
           children: [
             bluetoothManager.isConnected
                 ? const Text(
-                    'Connected to G1 glasses',
+                    'Connected to Even Realities G1 glasses',
                     style: TextStyle(color: Colors.green),
                   )
                 : ElevatedButton(
@@ -82,10 +82,10 @@ class GlassStatusState extends State<GlassStatus> {
                                   strokeWidth: 2,
                                 ),
                               ),
-                              Text('Scanning for G1 glasses'),
+                              Text('Scanning for Even Realities G1 glasses'),
                             ],
                           )
-                        : const Text('Connect to G1'),
+                        : const Text('Connect to Even Realities G1 Glasses'),
                   ),
           ],
         ),
