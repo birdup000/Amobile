@@ -275,11 +275,10 @@ class _HomePageState extends State<HomePage> {
       final cookieManager = CookieManager();
       final existingId = await cookieManager.getAgixtConversationId();
       
-      // If we don't have a conversation ID or it's invalid, generate a new one
+      // If we don't have a conversation ID, set it to "-" instead of generating one
       if (existingId == null || existingId.isEmpty || existingId == 'Not set') {
-        final newId = _generateConversationId();
-        await cookieManager.saveAgixtConversationId(newId);
-        debugPrint('Generated and saved new conversation ID: $newId');
+        await cookieManager.saveAgixtConversationId("-");
+        debugPrint('Set default conversation ID to "-"');
       } else {
         debugPrint('Using existing conversation ID: $existingId');
       }
@@ -288,11 +287,10 @@ class _HomePageState extends State<HomePage> {
     }
   }
   
-  // Generate a new conversation ID
+  // This method should not be used as we're not generating IDs anymore
+  // Kept for reference but not called anywhere
   String _generateConversationId() {
-    final timestamp = DateTime.now().millisecondsSinceEpoch.toString();
-    final random = (1000 + DateTime.now().microsecond % 9000).toString();
-    return 'conv-$timestamp-$random';
+    return "-"; // Return "-" instead of generating an ID
   }
   
   // Retry extracting agent info after a delay

@@ -250,26 +250,25 @@ class AGiXTChatWidget implements AGiXTWidget {
       final cookieManager = CookieManager();
       String? storedConversationId = await cookieManager.getAgixtConversationId();
       
-      // Generate a new ID if we don't have one stored
+      // Use "-" if we don't have one stored, instead of generating a new ID
       if (storedConversationId == null || storedConversationId.isEmpty) {
-        final newConversationId = _generateConversationId();
-        await cookieManager.saveAgixtConversationId(newConversationId);
-        return newConversationId;
+        await cookieManager.saveAgixtConversationId("-");
+        debugPrint('Using default conversation ID: "-"');
+        return "-";
       }
       
       return storedConversationId;
     } catch (e) {
       debugPrint('Error getting conversation ID: $e');
-      // Return a fallback ID if there's an error
-      return _generateConversationId();
+      // Return "-" as default if there's an error
+      return "-";
     }
   }
   
-  // Generate a new random conversation ID
+  // Generate a default conversation ID (now just returns "-")
   String _generateConversationId() {
-    final timestamp = DateTime.now().millisecondsSinceEpoch.toString();
-    final random = (1000 + DateTime.now().microsecond % 9000).toString();
-    return 'conv-$timestamp-$random';
+    // No longer generating random IDs
+    return "-";
   }
   
   // Update the conversation ID when the URL changes
@@ -316,9 +315,9 @@ class AGiXTChatWidget implements AGiXTWidget {
       final existingId = await cookieManager.getAgixtConversationId();
       
       if (existingId == null || existingId.isEmpty || existingId == 'Not set') {
-        final newId = _generateConversationId();
-        await cookieManager.saveAgixtConversationId(newId);
-        debugPrint('Generated new conversation ID: $newId');
+        // Use "-" instead of generating a new ID
+        await cookieManager.saveAgixtConversationId("-");
+        debugPrint('Set default conversation ID to "-"');
       } else {
         debugPrint('Using existing conversation ID: $existingId');
       }
