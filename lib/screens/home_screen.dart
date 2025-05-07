@@ -529,9 +529,19 @@ class _HomePageState extends State<HomePage> {
 
   // Helper method to save agent value
   Future<void> _saveAgentValue(String agentValue) async {
+    // Remove quotes that might be surrounding the agent value
+    String cleanValue = agentValue;
+    
+    // Check if the value starts and ends with quotes
+    if (cleanValue.startsWith('"') && cleanValue.endsWith('"')) {
+      cleanValue = cleanValue.substring(1, cleanValue.length - 1);
+    }
+    
+    debugPrint('Original agent value: $agentValue, Clean value: $cleanValue');
+    
     final cookieManager = CookieManager();
-    await cookieManager.saveAgixtAgentCookie(agentValue);
-    debugPrint('Saved agent value: $agentValue');
+    await cookieManager.saveAgixtAgentCookie(cleanValue);
+    debugPrint('Saved agent value: $cleanValue');
 
     // Notify any listening screens to update
     _notifyDataChange();
