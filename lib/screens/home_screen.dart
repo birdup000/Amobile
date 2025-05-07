@@ -6,12 +6,16 @@ import 'package:agixt/screens/agixt_daily.dart';
 import 'package:agixt/screens/agixt_stop.dart';
 import 'package:agixt/screens/settings_screen.dart';
 import 'package:agixt/services/ai_service.dart';
+import 'package:agixt/services/cookie_manager.dart';
 import 'package:agixt/utils/ui_perfs.dart';
 import 'package:agixt/widgets/current_agixt.dart';
 import 'package:agixt/widgets/gravatar_image.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:webview_flutter_android/webview_flutter_android.dart';
+import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/bluetooth_manager.dart';
 
 class HomePage extends StatefulWidget {
@@ -123,23 +127,85 @@ class _HomePageState extends State<HomePage> {
     final webUrl = await AuthService.getWebUrlWithToken();
     final chatUrl = Uri.parse(webUrl).replace(path: '/chat').toString();
     
+    // Create a CookieManager instance
+    final cookieManager = CookieManager();
+    
     // Initialize the WebView controller
     _webViewController = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setNavigationDelegate(
         NavigationDelegate(
-          onPageFinished: (String url) {
+          onPageFinished: (String url) async {
             setState(() {
               _isWebViewLoaded = true;
             });
+            
+            // Extract the agixt-conversation cookie
+            _extractAgixtConversationCookie();
           },
           onNavigationRequest: (NavigationRequest request) {
-            // You can add logic here to handle navigation within the WebView
+            // Extract cookies whenever navigation happens
+            _extractAgixtConversationCookie();
             return NavigationDecision.navigate;
           },
         ),
       )
       ..loadRequest(Uri.parse(chatUrl));
+  }
+  
+  // Extract the agixt-conversation cookie from WebView
+  Future<void> _extractAgixtConversationCookie() async {
+    if (_webViewController == null) return;
+    
+    try {
+      // Using JavaScript to extract the agixt-conversation cookie
+      final conversationCookieScript = '''
+      (function() {
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+          var cookie = cookies[i].trim();
+          if (cookie.startsWith('agixt-conversation=')) {
+            return cookie.substring('agixt-conversation='.length);
+          }
+        }
+        return '';
+      })()
+      ''';
+      
+      final conversationCookieValue = await _webViewController!.runJavaScriptReturningResult(conversationCookieScript) as String?;
+      
+      if (conversationCookieValue != null && conversationCookieValue.isNotEmpty && conversationCookieValue != 'null' && conversationCookieValue != '""') {
+        // Store the cookie using our CookieManager
+        final cookieManager = CookieManager();
+        await cookieManager.saveAgixtConversationCookie(conversationCookieValue);
+        debugPrint('Extracted agixt-conversation cookie: $conversationCookieValue');
+      }
+      
+      // Using JavaScript to extract the agixt-agent cookie
+      final agentCookieScript = '''
+      (function() {
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+          var cookie = cookies[i].trim();
+          if (cookie.startsWith('agixt-agent=')) {
+            return cookie.substring('agixt-agent='.length);
+          }
+        }
+        return '';
+      })()
+      ''';
+      
+      final agentCookieValue = await _webViewController!.runJavaScriptReturningResult(agentCookieScript) as String?;
+      
+      if (agentCookieValue != null && agentCookieValue.isNotEmpty && agentCookieValue != 'null' && agentCookieValue != '""') {
+        // Store the agent cookie using our CookieManager
+        final cookieManager = CookieManager();
+        await cookieManager.saveAgixtAgentCookie(agentCookieValue);
+        debugPrint('Extracted agixt-agent cookie: $agentCookieValue');
+      }
+    } catch (e) {
+      debugPrint('Error extracting cookies: $e');
+    }
   }
 
   @override
