@@ -225,10 +225,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
 
-                  // Current AGiXT info
-                  CurrentAGiXT(),
-
-                  // AI Assistant Card
+                  // AI Assistant Card - Moved above Current AGiXT
                   Card(
                     margin: const EdgeInsets.symmetric(vertical: 10.0),
                     child: Padding(
@@ -268,87 +265,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
 
-                  // AGiXT Chat Interface Card (redirects to home screen)
-                  Card(
-                    margin: const EdgeInsets.symmetric(vertical: 10.0),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(Icons.chat, color: Theme.of(context).primaryColor),
-                              const SizedBox(width: 10),
-                              const Text(
-                                'AGiXT Chat',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          const Text(
-                            'Access the AGiXT chat interface directly within the app.',
-                            style: TextStyle(fontSize: 14),
-                          ),
-                          const SizedBox(height: 15),
-                          ElevatedButton.icon(
-                            onPressed: () {
-                              Navigator.of(context).pop(); // Go back to home screen which shows WebView
-                            },
-                            icon: const Icon(Icons.chat),
-                            label: const Text('Open Chat Interface'),
-                            style: ElevatedButton.styleFrom(
-                              minimumSize: const Size(double.infinity, 44),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  // Go to AGiXT Web button
-                  Card(
-                    margin: const EdgeInsets.symmetric(vertical: 10.0),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(Icons.open_in_browser, color: Theme.of(context).primaryColor),
-                              const SizedBox(width: 10),
-                              const Text(
-                                'AGiXT Web Interface',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          const Text(
-                            'Access the full AGiXT web interface in your browser.',
-                            style: TextStyle(fontSize: 14),
-                          ),
-                          const SizedBox(height: 15),
-                          ElevatedButton.icon(
-                            onPressed: _openAGiXTWeb,
-                            icon: const Icon(Icons.open_in_browser),
-                            label: Text('Go to $appName'),
-                            style: ElevatedButton.styleFrom(
-                              minimumSize: const Size(double.infinity, 44),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                  // Current AGiXT info
+                  CurrentAGiXT(),
 
                   // Feature Navigation Section
                   Card(
