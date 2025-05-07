@@ -11,6 +11,7 @@ import 'package:agixt/widgets/current_agixt.dart';
 import 'package:agixt/widgets/gravatar_image.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 import '../services/bluetooth_manager.dart';
 
 class HomePage extends StatefulWidget {
@@ -28,12 +29,17 @@ class _HomePageState extends State<HomePage> {
   String? _userEmail;
   bool _isLoggedIn = true;
   bool _isSideButtonListenerAttached = false;
+  WebViewController? _webViewController;
+  bool _isWebViewLoaded = false;
+  // WebView is now shown by default
+  bool _showWebView = true;
 
   @override
   void initState() {
     super.initState();
     _loadUserDetails();
     _setupBluetoothListeners();
+    _initializeWebView();
   }
 
   Future<void> _loadUserDetails() async {
@@ -110,13 +116,37 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final appName = AuthService.appName;
+  Future<void> _initializeWebView() async {
+    if (!_isLoggedIn) return;
     
+    // Get the URL with authentication token
+    final webUrl = await AuthService.getWebUrlWithToken();
+    final chatUrl = Uri.parse(webUrl).replace(path: '/chat').toString();
+    
+    // Initialize the WebView controller
+    _webViewController = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onPageFinished: (String url) {
+            setState(() {
+              _isWebViewLoaded = true;
+            });
+          },
+          onNavigationRequest: (NavigationRequest request) {
+            // You can add logic here to handle navigation within the WebView
+            return NavigationDecision.navigate;
+          },
+        ),
+      )
+      ..loadRequest(Uri.parse(chatUrl));
+  }
+
+  @override
+  Widget build(BuildContext context) {    
     return Scaffold(
       appBar: AppBar(
-        title: const Text('AGiXT'),
+        title: Text('AGiXT Chat'),
         actions: [
           // Profile button with Gravatar
           if (_userEmail != null)
@@ -159,162 +189,25 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16.0),
-        children: [
-          // Current AGiXT info
-          CurrentAGiXT(),
+      body: _buildWebView(),
+    );
+  }
 
-          // AI Assistant Card
-          Card(
-            margin: const EdgeInsets.symmetric(vertical: 10.0),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.mic, color: Theme.of(context).primaryColor),
-                      const SizedBox(width: 10),
-                      const Text(
-                        'AI Assistant',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    'Press the side button on your glasses to speak with the AI assistant.',
-                    style: TextStyle(fontSize: 14),
-                  ),
-                  const SizedBox(height: 15),
-                  ElevatedButton.icon(
-                    onPressed: _handleSideButtonPress,
-                    icon: const Icon(Icons.record_voice_over),
-                    label: const Text('Activate Assistant'),
-                    style: ElevatedButton.styleFrom(
-                      minimumSize: const Size(double.infinity, 44),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+  Widget _buildWebView() {
+    if (_webViewController == null) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+    
+    return Column(
+      children: [
+        Expanded(
+          child: WebViewWidget(
+            controller: _webViewController!,
           ),
-
-          // Go to AGiXT Web button
-          Card(
-            margin: const EdgeInsets.symmetric(vertical: 10.0),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.open_in_browser, color: Theme.of(context).primaryColor),
-                      const SizedBox(width: 10),
-                      const Text(
-                        'AGiXT Web Interface',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    'Access the full AGiXT web interface in your browser.',
-                    style: TextStyle(fontSize: 14),
-                  ),
-                  const SizedBox(height: 15),
-                  ElevatedButton.icon(
-                    onPressed: _openAGiXTWeb,
-                    icon: const Icon(Icons.open_in_browser),
-                    label: Text('Go to $appName'),
-                    style: ElevatedButton.styleFrom(
-                      minimumSize: const Size(double.infinity, 44),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // Daily items
-          ListTile(
-            title: Row(
-              children: [
-                _ui.trainNerdMode
-                    ? Image(
-                        image: AssetImage('assets/icons/reference.png'),
-                        height: 20,
-                      )
-                    : Icon(Icons.sunny),
-                SizedBox(width: 10),
-                Text('Daily Items'),
-              ],
-            ),
-            trailing: Icon(Icons.chevron_right),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => AGiXTDailyPage()),
-              );
-            },
-          ),
-          
-          // Stop items
-          ListTile(
-            title: Row(
-              children: [
-                _ui.trainNerdMode
-                    ? Image(
-                        image: AssetImage('assets/icons/stop.png'),
-                        height: 20,
-                      )
-                    : Icon(Icons.notifications),
-                SizedBox(width: 10),
-                Text('Stop Items'),
-              ],
-            ),
-            trailing: Icon(Icons.chevron_right),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => AGiXTStopPage()),
-              );
-            },
-          ),
-          
-          // Checklists
-          ListTile(
-            title: Row(
-              children: [
-                _ui.trainNerdMode
-                    ? Image(
-                        image: AssetImage('assets/icons/oorsprong.png'),
-                        height: 20,
-                      )
-                    : Icon(Icons.checklist),
-                SizedBox(width: 10),
-                Text('Checklists'),
-              ],
-            ),
-            trailing: Icon(Icons.chevron_right),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => AGiXTChecklistPage()),
-              );
-            },
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
