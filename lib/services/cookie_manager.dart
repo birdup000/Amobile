@@ -2,7 +2,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart';
 
 class CookieManager {
-  static const String _agixtConversationKey = 'agixt_conversation_cookie';
+  static const String _agixtConversationKey = 'agixt_conversation_id';
   static const String _agixtAgentKey = 'agixt_agent_cookie';
   
   // Singleton instance
@@ -14,36 +14,36 @@ class CookieManager {
   
   CookieManager._internal();
   
-  // Save the agixt-conversation cookie
-  Future<void> saveAgixtConversationCookie(String cookieValue) async {
+  // Save the conversation ID extracted from URL
+  Future<void> saveAgixtConversationId(String conversationId) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_agixtConversationKey, cookieValue);
-      debugPrint('Saved agixt-conversation cookie: $cookieValue');
+      await prefs.setString(_agixtConversationKey, conversationId);
+      debugPrint('Saved agixt conversation ID: $conversationId');
     } catch (e) {
-      debugPrint('Error saving agixt-conversation cookie: $e');
+      debugPrint('Error saving agixt conversation ID: $e');
     }
   }
   
-  // Retrieve the agixt-conversation cookie
-  Future<String?> getAgixtConversationCookie() async {
+  // Retrieve the conversation ID
+  Future<String?> getAgixtConversationId() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       return prefs.getString(_agixtConversationKey);
     } catch (e) {
-      debugPrint('Error getting agixt-conversation cookie: $e');
+      debugPrint('Error getting agixt conversation ID: $e');
       return null;
     }
   }
   
-  // Clear the agixt-conversation cookie
-  Future<void> clearAgixtConversationCookie() async {
+  // Clear the conversation ID
+  Future<void> clearAgixtConversationId() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_agixtConversationKey);
-      debugPrint('Cleared agixt-conversation cookie');
+      debugPrint('Cleared agixt conversation ID');
     } catch (e) {
-      debugPrint('Error clearing agixt-conversation cookie: $e');
+      debugPrint('Error clearing agixt conversation ID: $e');
     }
   }
   

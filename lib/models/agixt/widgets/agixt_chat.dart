@@ -57,16 +57,11 @@ class AGiXTChatWidget implements AGiXTWidget {
         return "Please login to use AGiXT chat.";
       }
 
-      // Get the conversation ID from cookie or use "-" as default
+      // Get the conversation ID from URL or use "-" as default
       final cookieManager = CookieManager();
-      final conversationCookie =
-          await cookieManager.getAgixtConversationCookie();
-      final conversationId =
-          (conversationCookie != null && conversationCookie.isNotEmpty)
-              ? conversationCookie
-              : "-";
-
-      debugPrint('Using agixt-conversation cookie: $conversationId');
+      final conversationId = await cookieManager.getAgixtConversationId() ?? "-";
+      
+      debugPrint('Using conversation ID: $conversationId');
 
       // Create chat request
       final requestBody = {
@@ -74,8 +69,7 @@ class AGiXTChatWidget implements AGiXTWidget {
         "messages": [
           {"role": "user", "content": message}
         ],
-        "user":
-            conversationId // Use the conversation ID from cookie for the user field
+        "user": conversationId // Use the conversation ID from URL for the user field
       };
 
       // Send request to AGiXT API
@@ -90,14 +84,14 @@ class AGiXTChatWidget implements AGiXTWidget {
 
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
-        if (jsonResponse['choices'] != null &&
+        if (jsonResponse['choices'] != null && 
             jsonResponse['choices'].isNotEmpty &&
             jsonResponse['choices'][0]['message'] != null) {
           final answer = jsonResponse['choices'][0]['message']['content'];
-
+          
           // Save this interaction for future reference
           await _saveInteraction(message, answer);
-
+          
           return answer;
         }
       } else if (response.statusCode == 401) {
@@ -105,7 +99,7 @@ class AGiXTChatWidget implements AGiXTWidget {
         await AuthService.logout();
         return "Authentication expired. Please login again.";
       }
-
+      
       return "Sorry, I couldn't get a response at this time.";
     } catch (e) {
       debugPrint('AGiXT Chat error: $e');

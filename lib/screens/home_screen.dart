@@ -125,10 +125,25 @@ class _HomePageState extends State<HomePage> {
     
     // Get the URL with authentication token
     final webUrl = await AuthService.getWebUrlWithToken();
-    final chatUrl = Uri.parse(webUrl).replace(path: '/chat').toString();
     
     // Create a CookieManager instance
     final cookieManager = CookieManager();
+    
+    // Check if we have a previous conversation ID to restore
+    final lastConversationId = await cookieManager.getAgixtConversationId();
+    
+    // Determine the URL to load
+    String urlToLoad;
+    if (lastConversationId != null && lastConversationId != "-") {
+      // Navigate to the previous conversation if available
+      final uri = Uri.parse(webUrl);
+      urlToLoad = uri.replace(path: '/chat/${lastConversationId}').toString();
+      debugPrint('Navigating to previous conversation: $urlToLoad');
+    } else {
+      // Otherwise, just go to the main chat page
+      final uri = Uri.parse(webUrl);
+      urlToLoad = uri.replace(path: '/chat').toString();
+    }
     
     // Initialize the WebView controller
     _webViewController = WebViewController()
@@ -140,45 +155,43 @@ class _HomePageState extends State<HomePage> {
               _isWebViewLoaded = true;
             });
             
-            // Extract the agixt-conversation cookie
-            _extractAgixtConversationCookie();
+            // Extract conversation ID from URL and agent cookie
+            _extractConversationIdAndAgentInfo(url);
           },
           onNavigationRequest: (NavigationRequest request) {
-            // Extract cookies whenever navigation happens
-            _extractAgixtConversationCookie();
+            // Extract conversation ID whenever navigation happens
+            _extractConversationIdAndAgentInfo(request.url);
             return NavigationDecision.navigate;
           },
         ),
       )
-      ..loadRequest(Uri.parse(chatUrl));
+      ..loadRequest(Uri.parse(urlToLoad));
   }
   
-  // Extract the agixt-conversation cookie from WebView
-  Future<void> _extractAgixtConversationCookie() async {
+  // Extract the conversation ID from URL and agent cookie from WebView
+  Future<void> _extractConversationIdAndAgentInfo(String url) async {
     if (_webViewController == null) return;
     
     try {
-      // Using JavaScript to extract the agixt-conversation cookie
-      final conversationCookieScript = '''
-      (function() {
-        var cookies = document.cookie.split(';');
-        for (var i = 0; i < cookies.length; i++) {
-          var cookie = cookies[i].trim();
-          if (cookie.startsWith('agixt-conversation=')) {
-            return cookie.substring('agixt-conversation='.length);
+      // Extract conversation ID from URL path if it contains '/chat/'
+      if (url.contains('/chat/')) {
+        final uri = Uri.parse(url);
+        final pathSegments = uri.pathSegments;
+        
+        // Find the index of 'chat' in the path segments
+        final chatIndex = pathSegments.indexOf('chat');
+        
+        // If 'chat' is found and there's a segment after it, that's our conversation ID
+        if (chatIndex >= 0 && chatIndex < pathSegments.length - 1) {
+          final conversationId = pathSegments[chatIndex + 1];
+          
+          if (conversationId.isNotEmpty) {
+            // Store the conversation ID
+            final cookieManager = CookieManager();
+            await cookieManager.saveAgixtConversationId(conversationId);
+            debugPrint('Extracted conversation ID from URL: $conversationId');
           }
         }
-        return '';
-      })()
-      ''';
-      
-      final conversationCookieValue = await _webViewController!.runJavaScriptReturningResult(conversationCookieScript) as String?;
-      
-      if (conversationCookieValue != null && conversationCookieValue.isNotEmpty && conversationCookieValue != 'null' && conversationCookieValue != '""') {
-        // Store the cookie using our CookieManager
-        final cookieManager = CookieManager();
-        await cookieManager.saveAgixtConversationCookie(conversationCookieValue);
-        debugPrint('Extracted agixt-conversation cookie: $conversationCookieValue');
       }
       
       // Using JavaScript to extract the agixt-agent cookie
@@ -204,7 +217,7 @@ class _HomePageState extends State<HomePage> {
         debugPrint('Extracted agixt-agent cookie: $agentCookieValue');
       }
     } catch (e) {
-      debugPrint('Error extracting cookies: $e');
+      debugPrint('Error extracting conversation ID or agent info: $e');
     }
   }
 
