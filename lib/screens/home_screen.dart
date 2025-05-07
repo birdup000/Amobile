@@ -367,6 +367,15 @@ class _HomePageState extends State<HomePage> {
     if (_webViewController == null) return;
 
     try {
+      // Register the JavaScript channel first
+      await _webViewController!.addJavaScriptChannel(
+        'UrlChangeListener',
+        onMessageReceived: (JavaScriptMessage message) {
+          debugPrint('URL change from JS: ${message.message}');
+          _extractConversationIdAndAgentInfo(message.message);
+        },
+      );
+
       // JavaScript to observe URL changes and call our handling function
       final urlObserverScript = '''
       (function() {
@@ -382,8 +391,8 @@ class _HomePageState extends State<HomePage> {
             console.log('URL changed from JS observer:', window.location.href);
             lastUrl = window.location.href;
             
-            // Call the Flutter handler
-            window.flutter_inappwebview.callHandler('onUrlChange', lastUrl);
+            // Use the registered JavaScript channel
+            UrlChangeListener.postMessage(lastUrl);
           }
         }
         
@@ -412,16 +421,6 @@ class _HomePageState extends State<HomePage> {
       ''';
 
       await _webViewController!.runJavaScript(urlObserverScript);
-
-      // Add JavaScript handler
-      await _webViewController!.addJavaScriptChannel(
-        'onUrlChange',
-        onMessageReceived: (JavaScriptMessage message) {
-          debugPrint('URL change from JS: ${message.message}');
-          _extractConversationIdAndAgentInfo(message.message);
-        },
-      );
-
       debugPrint('URL change observer setup complete');
     } catch (e) {
       debugPrint('Error setting up URL observer: $e');
@@ -433,6 +432,19 @@ class _HomePageState extends State<HomePage> {
     if (_webViewController == null) return;
 
     try {
+      // Register the JavaScript channel first
+      await _webViewController!.addJavaScriptChannel(
+        'AgentChangeListener',
+        onMessageReceived: (JavaScriptMessage message) {
+          if (message.message.isNotEmpty &&
+              message.message != 'null' &&
+              message.message != '""') {
+            debugPrint('Agent change from JS: ${message.message}');
+            _saveAgentValue(message.message);
+          }
+        },
+      );
+
       // JavaScript to observe agent selection changes
       final agentObserverScript = '''
       (function() {
@@ -486,7 +498,8 @@ class _HomePageState extends State<HomePage> {
             const agent = extractCurrentAgent();
             if (agent) {
               console.log('Agent may have changed to:', agent);
-              window.flutter_inappwebview.callHandler('onAgentChange', agent);
+              // Use the registered JavaScript channel
+              AgentChangeListener.postMessage(agent);
             }
           }, 300);
         }, true);
@@ -495,7 +508,8 @@ class _HomePageState extends State<HomePage> {
         setInterval(() => {
           const agent = extractCurrentAgent();
           if (agent) {
-            window.flutter_inappwebview.callHandler('onAgentChange', agent);
+            // Use the registered JavaScript channel
+            AgentChangeListener.postMessage(agent);
           }
         }, 2000);
         
@@ -507,20 +521,6 @@ class _HomePageState extends State<HomePage> {
       ''';
 
       await _webViewController!.runJavaScript(agentObserverScript);
-
-      // Add JavaScript handler
-      await _webViewController!.addJavaScriptChannel(
-        'onAgentChange',
-        onMessageReceived: (JavaScriptMessage message) {
-          if (message.message.isNotEmpty &&
-              message.message != 'null' &&
-              message.message != '""') {
-            debugPrint('Agent change from JS: ${message.message}');
-            _saveAgentValue(message.message);
-          }
-        },
-      );
-
       debugPrint('Agent selection observer setup complete');
     } catch (e) {
       debugPrint('Error setting up agent observer: $e');
