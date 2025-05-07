@@ -174,43 +174,70 @@ class _HomePageState extends State<HomePage> {
     if (_webViewController == null) return;
 
     try {
+      debugPrint('Processing URL for extraction: $url');
+      
       // Extract conversation ID from URL path if it contains '/chat/'
       if (url.contains('/chat/')) {
         final uri = Uri.parse(url);
         final pathSegments = uri.pathSegments;
+        debugPrint('Path segments: $pathSegments');
 
         // Find the index of 'chat' in the path segments
         final chatIndex = pathSegments.indexOf('chat');
+        debugPrint('Chat index in path: $chatIndex');
 
         // If 'chat' is found and there's a segment after it, that's our conversation ID
         if (chatIndex >= 0 && chatIndex < pathSegments.length - 1) {
           final conversationId = pathSegments[chatIndex + 1];
+          debugPrint('Found conversation ID in URL: $conversationId');
 
           if (conversationId.isNotEmpty) {
-            // Use the AGiXTChatWidget to update the conversation ID
+            // Store the conversation ID directly
+            final cookieManager = CookieManager();
+            await cookieManager.saveAgixtConversationId(conversationId);
+            debugPrint('Saved conversation ID directly: $conversationId');
+            
+            // Also use the AGiXTChatWidget method as a backup
             final chatWidget = AGiXTChatWidget();
             await chatWidget.updateConversationIdFromUrl(url);
-            debugPrint('Updated conversation ID from URL using AGiXTChatWidget');
           }
         }
       }
 
-      // Using JavaScript to extract the agixt-agent cookie
+      // Using improved JavaScript to extract the agixt-agent cookie
       final agentCookieScript = '''
       (function() {
-        var cookies = document.cookie.split(';');
-        for (var i = 0; i < cookies.length; i++) {
-          var cookie = cookies[i].trim();
-          if (cookie.startsWith('agixt-agent=')) {
-            return cookie.substring('agixt-agent='.length);
+        try {
+          var cookies = document.cookie.split(';');
+          for (var i = 0; i < cookies.length; i++) {
+            var cookie = cookies[i].trim();
+            if (cookie.startsWith('agixt-agent=')) {
+              var value = cookie.substring('agixt-agent='.length);
+              console.log('Found agixt-agent cookie:', value);
+              return value;
+            }
           }
+          
+          // Try to find the agent from the page content if cookie approach failed
+          var agentElement = document.querySelector('.agent-selector .selected');
+          if (agentElement) {
+            var agentName = agentElement.textContent.trim();
+            console.log('Found agent from selector:', agentName);
+            return agentName;
+          }
+          
+          return '';
+        } catch (e) {
+          console.error('Error in cookie extraction:', e);
+          return '';
         }
-        return '';
       })()
       ''';
 
       final agentCookieValue = await _webViewController!
           .runJavaScriptReturningResult(agentCookieScript) as String?;
+
+      debugPrint('Extracted agent value: ${agentCookieValue ?? "null"}');
 
       if (agentCookieValue != null &&
           agentCookieValue.isNotEmpty &&
@@ -219,10 +246,72 @@ class _HomePageState extends State<HomePage> {
         // Store the agent cookie using our CookieManager
         final cookieManager = CookieManager();
         await cookieManager.saveAgixtAgentCookie(agentCookieValue);
-        debugPrint('Extracted agixt-agent cookie: $agentCookieValue');
+        debugPrint('Saved agent value: $agentCookieValue');
+      } else {
+        // If we didn't get a value, schedule a retry after a delay
+        // This helps when the page is still loading or cookies aren't yet set
+        Future.delayed(const Duration(seconds: 2), () {
+          if (mounted) {
+            _extractAgentInfoRetry();
+          }
+        });
       }
     } catch (e) {
       debugPrint('Error extracting conversation ID or agent info: $e');
+    }
+  }
+  
+  // Retry extracting agent info after a delay
+  Future<void> _extractAgentInfoRetry() async {
+    if (_webViewController == null) return;
+    
+    try {
+      debugPrint('Retrying agent extraction...');
+      
+      // Alternative JavaScript approach focused just on agent extraction
+      final altAgentScript = '''
+      (function() {
+        try {
+          // Try cookie approach first
+          var cookies = document.cookie.split(';');
+          for (var i = 0; i < cookies.length; i++) {
+            var cookie = cookies[i].trim();
+            if (cookie.startsWith('agixt-agent=')) {
+              return cookie.substring('agixt-agent='.length);
+            }
+          }
+          
+          // Try DOM inspection
+          // Look for agent selector or any UI element that might contain the agent name
+          var agentElements = document.querySelectorAll('[data-agent], .agent-name, .model-selector');
+          for (var i = 0; i < agentElements.length; i++) {
+            var text = agentElements[i].textContent.trim();
+            if (text && text.length > 0 && text !== 'null') {
+              return text;
+            }
+          }
+          
+          return '';
+        } catch (e) {
+          console.error('Error in alternative agent extraction:', e);
+          return '';
+        }
+      })()
+      ''';
+      
+      final agentValue = await _webViewController!
+          .runJavaScriptReturningResult(altAgentScript) as String?;
+          
+      if (agentValue != null && 
+          agentValue.isNotEmpty && 
+          agentValue != 'null' &&
+          agentValue != '""') {
+        final cookieManager = CookieManager();
+        await cookieManager.saveAgixtAgentCookie(agentValue);
+        debugPrint('Saved agent value from retry: $agentValue');
+      }
+    } catch (e) {
+      debugPrint('Error in agent retry: $e');
     }
   }
 

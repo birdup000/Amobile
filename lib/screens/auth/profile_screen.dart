@@ -74,6 +74,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     // Get the current conversation ID from cookie manager
     final conversationId = await cookieManager.getAgixtConversationId();
     
+    debugPrint('Debug info - Agent: ${agent ?? "Not set"}, ConversationID: ${conversationId ?? "Not set"}');
+    
     if (mounted) {
       setState(() {
         _currentAgent = agent ?? 'Not set';
