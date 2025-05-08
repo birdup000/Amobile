@@ -117,14 +117,6 @@ class AGiXTChatWidget implements AGiXTWidget {
             // Notify any listeners that we need to navigate to the chat page
             // This will be picked up by the AppEvents system
             AppEvents.fireDataChanged();
-            
-            // Prepare the navigation URL for the WebView
-            final appUri = AuthService.serverUrl;
-            debugPrint('Will navigate to: $appUri/chat/$responseId');
-            // Wait 1 second to ensure the WebView is ready
-            await Future.delayed(const Duration(seconds: 1));
-            // Use JavaScript to navigate the WebView if possible
-            _navigateWebViewToChat(responseId.toString());
           }
 
           // Save this interaction for future reference
@@ -145,17 +137,6 @@ class AGiXTChatWidget implements AGiXTWidget {
     }
   }
   
-  // Method to navigate the WebView to the chat page with the given ID
-  void _navigateWebViewToChat(String conversationId) {
-    // This method doesn't directly manipulate the WebView
-    // Instead, it triggers an event that will be picked up by the HomePage
-    // which manages the WebView
-    AppEvents.fireDataChanged(data: {
-      'type': 'navigate_to_chat',
-      'conversation_id': conversationId
-    });
-  }
-
   // Build context data containing today's daily items, active checklists, and calendar items
   Future<String> _buildContextData() async {
     List<String> contextSections = [];
