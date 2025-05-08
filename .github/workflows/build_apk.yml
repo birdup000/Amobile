@@ -5,30 +5,58 @@ on:
       - '**'
 jobs:
   apk:
-    name: Build APK
+    name: Build APK (${{ matrix.flavor.name }})
     runs-on: ubuntu-latest
     container:
       image: joshxt/flutterbuilder:main
+    strategy:
+      matrix:
+        flavor:
+          - name: dev
+            env:
+              APP_NAME: AGiXT
+              AGIXT_SERVER: https://api.agixt.dev
+              APP_URI: https://agixt.dev
+            build_on: '**'
+          - name: everythingsoftware
+            env:
+              APP_NAME: "Everything Software"
+              AGIXT_SERVER: https://api.everything.software
+              APP_URI: https://everything.software
+            build_on: 'main'
+          - name: nursext
+            env:
+              APP_NAME: NurseXT
+              AGIXT_SERVER: https://api.everything.software
+              APP_URI: https://everything.software
+            build_on: 'main'
+          - name: xtsystems
+            env:
+              APP_NAME: "XT Systems"
+              AGIXT_SERVER: https://api.agixt.dev
+              APP_URI: https://dev.xt.systems
+            build_on: 'main'
     env:
-      APP_NAME: AGiXT
-      AGIXT_SERVER: https://api.agixt.dev
-      APP_URI: https://agixt.dev
+      APP_NAME: ${{ matrix.flavor.env.APP_NAME }}
+      AGIXT_SERVER: ${{ matrix.flavor.env.AGIXT_SERVER }}
+      APP_URI: ${{ matrix.flavor.env.APP_URI }}
+    if: ${{ matrix.flavor.build_on == '**' || (matrix.flavor.build_on == 'main' && github.ref == 'refs/heads/main') }}
     outputs:
       new_tag: ${{ steps.next_tag_version.outputs.new_tag }}
-      artifact_id: ${{ steps.set_artifact_id.outputs.artifact_id }}
+      artifacts_json: ${{ steps.set_artifact_ids.outputs.artifacts_json }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Increment tag version
+        if: github.ref == 'refs/heads/main'
         uses: mathieudutour/github-tag-action@v6.2
         id: next_tag_version
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           release_branches: main
           create_annotated_tag: true
-          dry_run: ${{ github.ref != 'refs/heads/main' }}
       - name: Setup repositories cache
         uses: actions/cache@v3
         with:
@@ -54,11 +82,17 @@ jobs:
         uses: actions/upload-artifact@v4
         id: upload_artifact
         with:
-          name: app-release.apk
+          name: ${{ matrix.flavor.name }}.apk
           path: build/app/outputs/flutter-apk/app-release.apk
       - name: Set artifact ID as output
-        id: set_artifact_id
-        run: echo "artifact_id=${{ steps.upload_artifact.outputs.artifact-id }}" >> $GITHUB_OUTPUT
+        id: set_artifact_ids
+        run: |
+          echo "artifacts_json={\"flavor\":\"${{ matrix.flavor.name }}\",\"artifact_id\":\"${{ steps.upload_artifact.outputs.artifact-id }}\"}" >> $GITHUB_OUTPUT
+      # For non-main branches, ensure we have a default value for new_tag output
+      - name: Set default tag for non-main branches
+        if: github.ref != 'refs/heads/main'
+        run: echo "new_tag=dev" >> $GITHUB_OUTPUT
+        id: default_tag
       - name: Send APK to Discord
         if: always()
         continue-on-error: true
@@ -80,25 +114,25 @@ jobs:
             DISCORD_NAME="**$GITHUB_USERNAME**"
           fi
           BRANCH_NAME=$(echo ${{ github.ref }} | awk -F'/' '{print $NF}')
-          VERSION="${{ steps.next_tag_version.outputs.new_tag }}"
-          ARTIFACT_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts/${{ steps.set_artifact_id.outputs.artifact_id }}"
+          VERSION="${{ github.ref == 'refs/heads/main' && steps.next_tag_version.outputs.new_tag || 'dev' }}"
+          ARTIFACT_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts/${{ steps.upload_artifact.outputs.artifact-id }}"
           JOB_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           COMMIT_MESSAGE=$(echo "${{ github.event.head_commit.message }}" | tr '\n' ' ' | sed 's/"/\\"/g')
           FILE_PATH="build/app/outputs/flutter-apk/app-release.apk"
           if [ -f "$FILE_PATH" ]; then
             FILE_SIZE=$(stat -c%s "$FILE_PATH")
             if [ $FILE_SIZE -gt 0 ]; then
-              MESSAGE="✅ Build successful for **${{ github.repository }}** on branch **$BRANCH_NAME** at commit ${{ github.sha }}\n**$COMMIT_MESSAGE** by ${DISCORD_NAME} \nDownload the APK here: $ARTIFACT_URL"
+              MESSAGE="✅ Build successful for **${{ github.repository }}** (${{ matrix.flavor.name }}.apk) on branch **$BRANCH_NAME** at commit ${{ github.sha }}\n**$COMMIT_MESSAGE** by ${DISCORD_NAME} \nDownload the APK here: $ARTIFACT_URL"
             else
-              MESSAGE="❌ Build failed for **${{ github.repository }}** on branch **$BRANCH_NAME** at commit ${{ github.sha }}\n**$COMMIT_MESSAGE** by ${DISCORD_NAME} \nView the build logs here: $JOB_URL"
+              MESSAGE="❌ Build failed for **${{ github.repository }}** (${{ matrix.flavor.name }}.apk) on branch **$BRANCH_NAME** at commit ${{ github.sha }}\n**$COMMIT_MESSAGE** by ${DISCORD_NAME} \nView the build logs here: $JOB_URL"
             fi
           else
-            MESSAGE="❌ Build failed for **${{ github.repository }}** on branch **$BRANCH_NAME** at commit ${{ github.sha }}\n**$COMMIT_MESSAGE** by ${DISCORD_NAME} \nView the build logs here: $JOB_URL"
+            MESSAGE="❌ Build failed for **${{ github.repository }}** (${{ matrix.flavor.name }}.apk) on branch **$BRANCH_NAME** at commit ${{ github.sha }}\n**$COMMIT_MESSAGE** by ${DISCORD_NAME} \nView the build logs here: $JOB_URL"
           fi
           curl -H "Content-Type:application/json" -d "{\"content\":\"$MESSAGE\"}" "${{ secrets.DISCORD_WEBHOOK }}"
 
   release:
-    name: Create Release and Upload APK
+    name: Create Release and Upload APKs
     needs: [apk]
     runs-on: ubuntu-latest
     # Only run the release job on the main branch
@@ -116,14 +150,14 @@ jobs:
           prerelease: false
           generate_release_notes: true
           token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Download APK from build
+      - name: Download all APKs from build
         uses: actions/download-artifact@v4
-        with:
-          name: app-release.apk
-      - name: Upload Release APK
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ needs.apk.outputs.new_tag }}
-          files: app-release.apk
-          token: ${{ secrets.GITHUB_TOKEN }}
-          name: ${{ needs.apk.outputs.new_tag }}
+      - name: Upload all APKs to release
+        run: |
+          for apk in *.apk; do
+            if [ -f "$apk" ]; then
+              gh release upload "${{ needs.apk.outputs.new_tag }}" "$apk" --clobber
+            fi
+          done
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
