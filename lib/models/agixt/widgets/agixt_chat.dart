@@ -65,10 +65,9 @@ class AGiXTChatWidget implements AGiXTWidget {
         return "Please login to use AGiXT chat.";
       }
 
-      // Get the current URL to extract conversation ID
+      // Get the current conversation ID
       final conversationId = await _getCurrentConversationId();
-
-      debugPrint('Using conversation ID: $conversationId');
+      debugPrint('Using conversation ID for chat: $conversationId');
 
       // Create chat request with context if available
       String finalMessage = message;
@@ -82,12 +81,11 @@ class AGiXTChatWidget implements AGiXTWidget {
         "messages": [
           {
             "role": "user",
-            "content": message,
+            "content": finalMessage,
             if (contextData.isNotEmpty) "context": contextData
           }
         ],
-        "user":
-            conversationId // Use the conversation ID from URL for the user field
+        "user": conversationId // Use the conversation ID for the user field
       };
 
       // Send request to AGiXT API
@@ -112,11 +110,15 @@ class AGiXTChatWidget implements AGiXTWidget {
           if (responseId != null && responseId.toString().isNotEmpty) {
             // Save the conversation ID from the response
             final cookieManager = CookieManager();
-            await cookieManager.saveAgixtConversationId(responseId.toString());
-            debugPrint('Saved conversation ID from response: $responseId');
+            final newConversationId = responseId.toString();
+            await cookieManager.saveAgixtConversationId(newConversationId);
+            debugPrint('Saved conversation ID from response: $newConversationId');
 
-            // Navigate to the conversation after a short delay
-            _navigateToConversation(responseId.toString(), jwt);
+            // Only navigate if we get a different ID than "-"
+            if (newConversationId != "-") {
+              // Navigate to the conversation after a short delay
+              _navigateToConversation(newConversationId, jwt);
+            }
           }
 
           // Save this interaction for future reference
