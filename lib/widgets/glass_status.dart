@@ -63,10 +63,34 @@ class GlassStatusState extends State<GlassStatus> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  bluetoothManager.isConnected
+                      ? 'Connected to Even Realities G1 glasses'
+                      : 'Disconnected from Even Realities G1 glasses',
+                  style: TextStyle(
+                    color: bluetoothManager.isConnected
+                        ? Colors.green
+                        : Colors.red,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
             bluetoothManager.isConnected
-                ? const Text(
-                    'Connected to Even Realities G1 glasses',
-                    style: TextStyle(color: Colors.green),
+                ? ElevatedButton(
+                    onPressed: () async {
+                      await bluetoothManager.disconnectFromGlasses();
+                      _refreshData();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      backgroundColor: Colors.red,
+                    ),
+                    child: const Text('Disconnect'),
                   )
                 : ElevatedButton(
                     onPressed: isScanning ? null : _scanAndConnect,
