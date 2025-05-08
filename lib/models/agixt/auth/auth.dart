@@ -280,4 +280,45 @@ class AuthService {
       return null;
     }
   }
+
+  // Get primary agent name from user info
+  static Future<String?> getPrimaryAgentName() async {
+    try {
+      // First check if we're logged in
+      final isLoggedIn = await AuthService.isLoggedIn();
+      if (!isLoggedIn) {
+        return null;
+      }
+      
+      // Get user info
+      final userInfo = await getUserInfo();
+      if (userInfo == null) {
+        return null;
+      }
+      
+      // Find the primary company
+      CompanyModel? primaryCompany;
+      try {
+        primaryCompany = userInfo.companies.firstWhere(
+          (company) => company.primary
+        );
+      } catch (e) {
+        // No primary company found, try to use the first one if available
+        if (userInfo.companies.isNotEmpty) {
+          primaryCompany = userInfo.companies.first;
+        }
+      }
+      
+      if (primaryCompany != null) {
+        // Return the agent name from the primary company
+        debugPrint('Found primary company: ${primaryCompany.name} with agent: ${primaryCompany.agentName}');
+        return primaryCompany.agentName;
+      }
+      
+      return null;
+    } catch (e) {
+      debugPrint('Error getting primary agent name: $e');
+      return null;
+    }
+  }
 }

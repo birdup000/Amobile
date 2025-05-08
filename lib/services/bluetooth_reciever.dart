@@ -218,7 +218,7 @@ class BluetoothReciever {
         voiceCollectorAI.isRecording = false;
         break;
       case 23:
-        debugPrint('[$side] Start Even AI');
+        debugPrint('[$side] Start AGiXT AI Chat');
         if (await _isLocalTranscriptionEnabled()) {
           debugPrint('[$side] Using local speech_to_text');
           if (!_speechEnabled) {
@@ -242,7 +242,7 @@ class BluetoothReciever {
         }
         break;
       case 24:
-        debugPrint('[$side] Stop Even AI recording');
+        debugPrint('[$side] Stop AGiXT recording');
         if (await _isLocalTranscriptionEnabled()) {
           debugPrint('[$side] Stopping local speech_to_text listener');
           _stopListening();
@@ -298,7 +298,7 @@ class BluetoothReciever {
         break;
 
       default:
-        debugPrint('[$side] Unknown Even AI subcommand: $subcmd');
+        debugPrint('[$side] Unknown AGiXT subcommand: $subcmd');
     }
   }
 
