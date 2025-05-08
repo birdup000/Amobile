@@ -23,6 +23,9 @@ import '../services/bluetooth_manager.dart';
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
+  // Static accessor for the WebViewController
+  static WebViewController? webViewController;
+
   @override
   State<HomePage> createState() => _HomePageState();
 }
@@ -47,53 +50,7 @@ class _HomePageState extends State<HomePage> {
     _setupBluetoothListeners();
     _initializeWebView();
     _ensureConversationId(); // Ensure a conversation ID exists at startup
-    
-    // Listen for navigation events
-    AppEvents.addListener(_handleAppEvents);
-  }
-  
-  @override
-  void dispose() {
-    // Remove event listener
-    AppEvents.removeListener(_handleAppEvents);
-    super.dispose();
-  }
-  
-  // Handle app events, especially for navigation requests
-  void _handleAppEvents() {
-    // Check if there's navigation data in the event
-    final eventData = AppEvents.getLastEventData();
-    if (eventData != null && 
-        eventData['type'] == 'navigate_to_chat' && 
-        eventData['conversation_id'] != null) {
-      
-      final conversationId = eventData['conversation_id'] as String;
-      _navigateToChat(conversationId);
-    }
-  }
-  
-  // Navigate the WebView to a specific chat conversation
-  Future<void> _navigateToChat(String conversationId) async {
-    if (_webViewController == null) return;
-    
-    try {
-      // Get the base URL
-      final baseUrl = AuthService.serverUrl;
-      final chatUrl = '$baseUrl/chat/$conversationId';
-      
-      debugPrint('Navigating WebView to conversation: $chatUrl');
-      
-      // Navigate using the WebViewController
-      await _webViewController!.loadRequest(Uri.parse(chatUrl));
-      
-      // Also update the conversation ID in the cookie manager
-      final cookieManager = CookieManager();
-      await cookieManager.saveAgixtConversationId(conversationId);
-      
-      debugPrint('WebView navigation to conversation complete');
-    } catch (e) {
-      debugPrint('Error navigating to chat conversation: $e');
-    }
+    _initializeAgentCookie(); // Initialize the agent cookie with primary agent if needed
   }
 
   Future<void> _loadUserDetails() async {
@@ -230,6 +187,9 @@ class _HomePageState extends State<HomePage> {
         ),
       )
       ..loadRequest(Uri.parse(urlToLoad));
+      
+    // Update the static accessor so it can be used from other classes
+    HomePage.webViewController = _webViewController;
   }
 
   // Extract the conversation ID from URL and agent cookie from WebView
@@ -608,6 +568,16 @@ class _HomePageState extends State<HomePage> {
   void _notifyDataChange() {
     // Using EventBus would be better, but we're keeping it simple with a static method
     AppEvents.notifyDataChanged();
+  }
+
+  // Initialize agent cookie with primary agent if none is set
+  Future<void> _initializeAgentCookie() async {
+    try {
+      final cookieManager = CookieManager();
+      await cookieManager.initializeAgentCookie();
+    } catch (e) {
+      debugPrint('Error initializing agent cookie: $e');
+    }
   }
 
   @override

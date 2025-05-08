@@ -5,11 +5,37 @@ plugins {
     id "dev.flutter.flutter-gradle-plugin"
 }
 
+// Load keystore properties from external file
+def keystorePropertiesFile = rootProject.file("keystore.properties")
+def keystoreProperties = new Properties()
+def useReleaseKeys = false
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+    // Only set to true if both the file exists and the keystore file actually exists
+    def keystoreFile = keystoreProperties['storeFile'] ? file(keystoreProperties['storeFile']) : null
+    useReleaseKeys = keystoreFile != null && keystoreFile.exists()
+}
+
 android {
     namespace = "dev.agixt.agixt"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = "27.0.11902837"
 
+    // Add signing configs for release builds
+    signingConfigs {
+        debug {
+            // Use debug keys by default
+        }
+        release {
+            // Only apply release signing config if keystore file exists
+            if (useReleaseKeys) {
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+                storeFile file(keystoreProperties['storeFile'])
+                storePassword keystoreProperties['storePassword']
+            }
+        }
+    }
   
     compileOptions {
         // Flag to enable support for the new language APIs
@@ -52,9 +78,8 @@ android {
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.debug
+            // Only use release signing config if keystore exists, otherwise use debug signing
+            signingConfig useReleaseKeys ? signingConfigs.release : signingConfigs.debug
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             minifyEnabled true
             shrinkResources true

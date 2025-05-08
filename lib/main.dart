@@ -68,7 +68,7 @@ void main() async {
   var callbackHandle = PluginUtilities.getCallbackHandle(backgroundMain);
   channel.invokeMethod('startService', callbackHandle?.toRawHandle());
 
-  runApp(const App());
+  runApp(const AGiXTApp());
 }
 
 void backgroundMain() {
@@ -102,14 +102,17 @@ class AppRetainWidget extends StatelessWidget {
   }
 }
 
-class App extends StatefulWidget {
-  const App({super.key});
+class AGiXTApp extends StatefulWidget {
+  const AGiXTApp({super.key});
+
+  // Global navigator key for accessing context from anywhere
+  static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
   @override
-  State<App> createState() => _AppState();
+  State<AGiXTApp> createState() => _AGiXTAppState();
 }
 
-class _AppState extends State<App> {
+class _AGiXTAppState extends State<AGiXTApp> {
   bool _isLoggedIn = false;
   bool _isLoading = true;
   StreamSubscription? _deepLinkSubscription;
@@ -224,6 +227,7 @@ class _AppState extends State<App> {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: APP_NAME,
+      navigatorKey: AGiXTApp.navigatorKey,
       theme: ThemeData(
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
