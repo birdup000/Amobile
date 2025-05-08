@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:agixt/main.dart'; // Import AGiXTApp from main.dart
 import 'package:agixt/models/agixt/auth/auth.dart';
 import 'package:agixt/models/agixt/calendar.dart';
 import 'package:agixt/models/agixt/checklist.dart';
