@@ -50,6 +50,7 @@ class _HomePageState extends State<HomePage> {
     _setupBluetoothListeners();
     _initializeWebView();
     _ensureConversationId(); // Ensure a conversation ID exists at startup
+    _initializeAgentCookie(); // Initialize the agent cookie with primary agent if needed
   }
 
   Future<void> _loadUserDetails() async {
@@ -567,6 +568,16 @@ class _HomePageState extends State<HomePage> {
   void _notifyDataChange() {
     // Using EventBus would be better, but we're keeping it simple with a static method
     AppEvents.notifyDataChanged();
+  }
+
+  // Initialize agent cookie with primary agent if none is set
+  Future<void> _initializeAgentCookie() async {
+    try {
+      final cookieManager = CookieManager();
+      await cookieManager.initializeAgentCookie();
+    } catch (e) {
+      debugPrint('Error initializing agent cookie: $e');
+    }
   }
 
   @override
