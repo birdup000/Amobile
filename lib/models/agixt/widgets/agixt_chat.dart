@@ -81,12 +81,13 @@ class AGiXTChatWidget implements AGiXTWidget {
         "model": await _getAgentName(),
         "messages": [
           {
-            "role": "user", 
+            "role": "user",
             "content": message,
             if (contextData.isNotEmpty) "context": contextData
           }
         ],
-        "user": conversationId // Use the conversation ID from URL for the user field
+        "user":
+            conversationId // Use the conversation ID from URL for the user field
       };
 
       // Send request to AGiXT API
@@ -113,7 +114,7 @@ class AGiXTChatWidget implements AGiXTWidget {
             final cookieManager = CookieManager();
             await cookieManager.saveAgixtConversationId(responseId.toString());
             debugPrint('Saved conversation ID from response: $responseId');
-            
+
             // Navigate to the conversation after a short delay
             _navigateToConversation(responseId.toString(), jwt);
           }
@@ -137,21 +138,22 @@ class AGiXTChatWidget implements AGiXTWidget {
   }
 
   // Navigate to the conversation in the WebView
-  Future<void> _navigateToConversation(String conversationId, String jwt) async {
+  Future<void> _navigateToConversation(
+      String conversationId, String jwt) async {
     try {
       // Get access to the WebViewController from the HomePage static property
       final webViewController = HomePage.webViewController;
-      
+
       if (webViewController != null) {
         // Wait a second before navigating to ensure the response is processed
         await Future.delayed(const Duration(seconds: 1));
-        
+
         // Build the navigation URL with the conversation ID and token
-        final baseUrl = AuthService.serverUrl;
+        final baseUrl = AuthService.appUri;
         final navigationUrl = '$baseUrl/chat/$conversationId?token=$jwt';
-        
+
         debugPrint('Navigating to conversation: $navigationUrl');
-        
+
         // Navigate using the WebViewController
         await webViewController.loadRequest(Uri.parse(navigationUrl));
       } else {
@@ -182,7 +184,8 @@ class AGiXTChatWidget implements AGiXTWidget {
     // Get today's calendar items
     final calendarItems = await _getTodaysCalendarItems();
     if (calendarItems.isNotEmpty) {
-      contextSections.add("### Users calendar items for today\n\n$calendarItems");
+      contextSections
+          .add("### Users calendar items for today\n\n$calendarItems");
     }
 
     return contextSections.join("\n\n");
@@ -202,9 +205,10 @@ class AGiXTChatWidget implements AGiXTWidget {
             .compareTo(TimeOfDay(hour: b.hour!, minute: b.minute!));
       });
 
-      return items.map((item) => 
-        "${item.hour?.toString().padLeft(2, '0') ?? '--'}:${item.minute?.toString().padLeft(2, '0') ?? '--'} ${item.title}"
-      ).join('\n');
+      return items
+          .map((item) =>
+              "${item.hour?.toString().padLeft(2, '0') ?? '--'}:${item.minute?.toString().padLeft(2, '0') ?? '--'} ${item.title}")
+          .join('\n');
     } catch (e) {
       debugPrint('Error fetching daily items: $e');
       return '';
@@ -217,13 +221,14 @@ class AGiXTChatWidget implements AGiXTWidget {
       final checklistBox = Hive.box<AGiXTChecklist>('agixtChecklistBox');
       if (checklistBox.isEmpty) return '';
 
-      final checklists = checklistBox.values.where((list) => list.isShown).toList();
+      final checklists =
+          checklistBox.values.where((list) => list.isShown).toList();
       if (checklists.isEmpty) return '';
 
       List<String> result = [];
       for (var checklist in checklists) {
         if (checklist.items.isEmpty) continue;
-        
+
         result.add("${checklist.name}:");
         checklist.items.forEach((item) {
           result.add("- ${item.title}");
@@ -244,9 +249,10 @@ class AGiXTChatWidget implements AGiXTWidget {
       final calendarBox = Hive.box<AGiXTCalendar>('agixtCalendarBox');
       if (calendarBox.isEmpty) return '';
 
-      final enabledCalendars = calendarBox.values.where((cal) => cal.enabled).toList();
+      final enabledCalendars =
+          calendarBox.values.where((cal) => cal.enabled).toList();
       if (enabledCalendars.isEmpty) return '';
-      
+
       final deviceCal = DeviceCalendarPlugin();
       List<String> calendarEvents = [];
 
@@ -264,11 +270,12 @@ class AGiXTChatWidget implements AGiXTWidget {
             if (event.start != null) {
               final start = event.start!.toLocal();
               final end = event.end?.toLocal();
-              final timeStr = end != null 
-                ? "${start.hour.toString().padLeft(2, '0')}:${start.minute.toString().padLeft(2, '0')} - ${end.hour.toString().padLeft(2, '0')}:${end.minute.toString().padLeft(2, '0')}"
-                : "${start.hour.toString().padLeft(2, '0')}:${start.minute.toString().padLeft(2, '0')}";
-              
-              calendarEvents.add("$timeStr ${event.title ?? 'Untitled event'}${event.location != null && event.location!.isNotEmpty ? ' at ${event.location}' : ''}");
+              final timeStr = end != null
+                  ? "${start.hour.toString().padLeft(2, '0')}:${start.minute.toString().padLeft(2, '0')} - ${end.hour.toString().padLeft(2, '0')}:${end.minute.toString().padLeft(2, '0')}"
+                  : "${start.hour.toString().padLeft(2, '0')}:${start.minute.toString().padLeft(2, '0')}";
+
+              calendarEvents.add(
+                  "$timeStr ${event.title ?? 'Untitled event'}${event.location != null && event.location!.isNotEmpty ? ' at ${event.location}' : ''}");
             }
           }
         }
@@ -288,15 +295,16 @@ class AGiXTChatWidget implements AGiXTWidget {
     try {
       // First check if we have a stored conversation ID
       final cookieManager = CookieManager();
-      String? storedConversationId = await cookieManager.getAgixtConversationId();
-      
+      String? storedConversationId =
+          await cookieManager.getAgixtConversationId();
+
       // Use "-" if we don't have one stored, instead of generating a new ID
       if (storedConversationId == null || storedConversationId.isEmpty) {
         await cookieManager.saveAgixtConversationId("-");
         debugPrint('Using default conversation ID: "-"');
         return "-";
       }
-      
+
       return storedConversationId;
     } catch (e) {
       debugPrint('Error getting conversation ID: $e');
@@ -304,25 +312,25 @@ class AGiXTChatWidget implements AGiXTWidget {
       return "-";
     }
   }
-  
+
   // Generate a default conversation ID (now just returns "-")
   String _generateConversationId() {
     // No longer generating random IDs
     return "-";
   }
-  
+
   // Update the conversation ID when the URL changes
   Future<void> updateConversationIdFromUrl(String url) async {
     try {
       debugPrint('Updating conversation ID from URL: $url');
-      
+
       final uri = Uri.parse(url);
       final pathSegments = uri.pathSegments;
-      
+
       // Check if the URL is '/chat' exactly (without a trailing segment)
-      if (pathSegments.contains('chat') && 
-          (pathSegments.length == 1 || 
-          (pathSegments.length > 1 && pathSegments.last == 'chat'))) {
+      if (pathSegments.contains('chat') &&
+          (pathSegments.length == 1 ||
+              (pathSegments.length > 1 && pathSegments.last == 'chat'))) {
         debugPrint('URL is exactly /chat - setting conversation ID to "-"');
         final cookieManager = CookieManager();
         await cookieManager.saveAgixtConversationId("-");
@@ -333,12 +341,12 @@ class AGiXTChatWidget implements AGiXTWidget {
         // Extract the conversation ID from the URL
         final RegExp regExp = RegExp(r'/chat/([a-zA-Z0-9-_]+)');
         final match = regExp.firstMatch(url);
-        
+
         if (match != null && match.groupCount >= 1) {
           final conversationId = match.group(1)!;
-          
+
           debugPrint('Found conversation ID in URL pattern: $conversationId');
-          
+
           // If we have a valid conversation ID, save it
           if (conversationId.isNotEmpty) {
             final cookieManager = CookieManager();
@@ -346,11 +354,13 @@ class AGiXTChatWidget implements AGiXTWidget {
             debugPrint('Updated conversation ID from URL: $conversationId');
           }
         } else {
-          debugPrint('No conversation ID found in URL pattern - ensuring default ID exists');
+          debugPrint(
+              'No conversation ID found in URL pattern - ensuring default ID exists');
           await _ensureConversationId();
         }
       } else {
-        debugPrint('URL does not contain /chat/ path - ensuring default ID exists');
+        debugPrint(
+            'URL does not contain /chat/ path - ensuring default ID exists');
         await _ensureConversationId();
       }
     } catch (e) {
@@ -359,13 +369,13 @@ class AGiXTChatWidget implements AGiXTWidget {
       await _ensureConversationId();
     }
   }
-  
+
   // Ensure a valid conversation ID exists
   Future<void> _ensureConversationId() async {
     try {
       final cookieManager = CookieManager();
       final existingId = await cookieManager.getAgixtConversationId();
-      
+
       if (existingId == null || existingId.isEmpty || existingId == 'Not set') {
         // Use "-" instead of generating a new ID
         await cookieManager.saveAgixtConversationId("-");
