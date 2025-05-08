@@ -23,6 +23,9 @@ import '../services/bluetooth_manager.dart';
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
+  // Static accessor for the WebViewController
+  static WebViewController? webViewController;
+
   @override
   State<HomePage> createState() => _HomePageState();
 }
@@ -183,6 +186,9 @@ class _HomePageState extends State<HomePage> {
         ),
       )
       ..loadRequest(Uri.parse(urlToLoad));
+      
+    // Update the static accessor so it can be used from other classes
+    HomePage.webViewController = _webViewController;
   }
 
   // Extract the conversation ID from URL and agent cookie from WebView

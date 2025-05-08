@@ -5,6 +5,7 @@ import 'package:agixt/models/agixt/checklist.dart';
 import 'package:agixt/models/agixt/daily.dart';
 import 'package:agixt/models/agixt/widgets/agixt_widget.dart';
 import 'package:agixt/models/g1/note.dart';
+import 'package:agixt/screens/home_screen.dart'; // Import HomePage
 import 'package:agixt/services/cookie_manager.dart';
 import 'package:device_calendar/device_calendar.dart';
 import 'package:flutter/foundation.dart';
@@ -13,6 +14,7 @@ import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:webview_flutter/webview_flutter.dart'; // Import WebViewController
 
 class AGiXTChatWidget implements AGiXTWidget {
   static const String DEFAULT_MODEL = "XT";
@@ -104,6 +106,18 @@ class AGiXTChatWidget implements AGiXTWidget {
             jsonResponse['choices'][0]['message'] != null) {
           final answer = jsonResponse['choices'][0]['message']['content'];
 
+          // Extract the conversation ID from the response
+          final responseId = jsonResponse['id'];
+          if (responseId != null && responseId.toString().isNotEmpty) {
+            // Save the conversation ID from the response
+            final cookieManager = CookieManager();
+            await cookieManager.saveAgixtConversationId(responseId.toString());
+            debugPrint('Saved conversation ID from response: $responseId');
+            
+            // Navigate to the conversation after a short delay
+            _navigateToConversation(responseId.toString(), jwt);
+          }
+
           // Save this interaction for future reference
           await _saveInteraction(message, answer);
 
@@ -119,6 +133,32 @@ class AGiXTChatWidget implements AGiXTWidget {
     } catch (e) {
       debugPrint('AGiXT Chat error: $e');
       return "An error occurred while connecting to AGiXT.";
+    }
+  }
+
+  // Navigate to the conversation in the WebView
+  Future<void> _navigateToConversation(String conversationId, String jwt) async {
+    try {
+      // Get access to the WebViewController from the HomePage static property
+      final webViewController = HomePage.webViewController;
+      
+      if (webViewController != null) {
+        // Wait a second before navigating to ensure the response is processed
+        await Future.delayed(const Duration(seconds: 1));
+        
+        // Build the navigation URL with the conversation ID and token
+        final baseUrl = AuthService.serverUrl;
+        final navigationUrl = '$baseUrl/chat/$conversationId?token=$jwt';
+        
+        debugPrint('Navigating to conversation: $navigationUrl');
+        
+        // Navigate using the WebViewController
+        await webViewController.loadRequest(Uri.parse(navigationUrl));
+      } else {
+        debugPrint('WebViewController not available for navigation');
+      }
+    } catch (e) {
+      debugPrint('Error navigating to conversation: $e');
     }
   }
 
