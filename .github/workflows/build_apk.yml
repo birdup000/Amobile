@@ -218,10 +218,10 @@ jobs:
         uses: actions/download-artifact@v4
       - name: Upload all APKs to release
         run: |
-          for apk in *.apk; do
-            if [ -f "$apk" ]; then
-              gh release upload "${{ needs.apk-dev.outputs.new_tag }}" "$apk" --clobber
-            fi
+          # Find all APK files in the artifacts directory structure
+          find artifacts -name "*.apk" -type f | while read apk_file; do
+            echo "Uploading $apk_file to release..."
+            gh release upload "${{ needs.apk-dev.outputs.new_tag }}" "$apk_file" --clobber
           done
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
