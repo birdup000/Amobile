@@ -175,18 +175,33 @@ class BluetoothManager {
       throw Exception('Bluetooth is turned off');
     }
 
+    // Stop any existing scan
+    await FlutterBluePlus.stopScan();
+
+    // Make sure old connections are properly cleaned up
+    await disconnectFromGlasses();
+
     // Reset state
     _isScanning = true;
     _retryCount = 0;
     leftGlass = null;
     rightGlass = null;
 
+    await Future.delayed(
+        const Duration(milliseconds: 500)); // Give BT stack time to clean up
     await _startScan(onUpdate);
   }
+
+  StreamSubscription? _scanSubscription;
+  StreamSubscription? _scanningSubscription;
 
   Future<void> _startScan(OnUpdate onUpdate) async {
     await FlutterBluePlus.stopScan();
     debugPrint('Starting new scan attempt ${_retryCount + 1}/$maxRetries');
+
+    // Cancel any existing subscriptions
+    _scanSubscription?.cancel();
+    _scanningSubscription?.cancel();
 
     // Set scan timeout
     _scanTimer?.cancel();
@@ -202,7 +217,7 @@ class BluetoothManager {
     );
 
     // Listen for scan results
-    FlutterBluePlus.scanResults.listen(
+    _scanSubscription = FlutterBluePlus.scanResults.listen(
       (results) {
         for (ScanResult result in results) {
           String deviceName = result.device.name;
@@ -221,7 +236,7 @@ class BluetoothManager {
     );
 
     // Monitor scanning state
-    FlutterBluePlus.isScanning.listen((isScanning) {
+    _scanningSubscription = FlutterBluePlus.isScanning.listen((isScanning) {
       debugPrint('Scanning state changed: $isScanning');
       if (!isScanning && _isScanning) {
         _handleScanComplete(onUpdate);
@@ -254,28 +269,53 @@ class BluetoothManager {
       await _saveLastG1Used(GlassSide.right, glass.name, glass.device.id.id);
     }
     if (glass != null) {
-      await glass.connect();
+      try {
+        // Attempt connection up to 3 times
+        int retries = 0;
+        bool connected = false;
+        while (!connected && retries < 3) {
+          try {
+            await glass.connect();
+            connected = true;
+          } catch (e) {
+            retries++;
+            debugPrint('Connection attempt ${retries} failed: $e');
+            if (retries < 3) {
+              await Future.delayed(Duration(seconds: 1));
+            }
+          }
+        }
+        
+        if (!connected) {
+          throw Exception('Failed to connect after 3 attempts');
+        }
 
-      _setReconnect(glass);
-    }
+        _setReconnect(glass);
 
-    // Stop scanning if both glasses are found
-    if (leftGlass != null && rightGlass != null) {
-      _isScanning = false;
-      stopScanning();
-      _sync();
+        // Verify both glasses are connected before stopping scan
+        if (leftGlass != null && rightGlass != null) {
+          if (leftGlass!.isConnected && rightGlass!.isConnected) {
+            _isScanning = false;
+            stopScanning();
+            await Future.delayed(const Duration(seconds: 2)); // Increased delay for stability
+            await _sync();
+          }
+        }
+      } catch (e) {
+        debugPrint('Error connecting to ${glass.side} glass: $e');
+        if (glass.side == GlassSide.left) {
+          leftGlass = null;
+        } else {
+          rightGlass = null;
+        }
+        // Don't rethrow - let the scan continue to retry
+      }
     }
   }
 
   void _setReconnect(Glass glass) {
-    glass.device.connectionState.listen((BluetoothConnectionState state) {
-      debugPrint('[${glass.side} Glass] Connection state: $state');
-      if (state == BluetoothConnectionState.disconnected) {
-        debugPrint(
-            '[${glass.side} Glass] Disconnected, attempting to reconnect...');
-        glass.connect();
-      }
-    });
+    // The Glass class now handles its own reconnection logic via its connectionStateSubscription
+    debugPrint('[${glass.side} Glass] Reconnection handler configured');
   }
 
   void _handleScanTimeout(OnUpdate onUpdate) async {
@@ -598,14 +638,48 @@ class BluetoothManager {
   }
 
   Future<void> disconnectFromGlasses() async {
+    // Cancel any active subscriptions
+    _scanSubscription?.cancel();
+    _scanningSubscription?.cancel();
+    
+    // Proper delay to allow Bluetooth stack to stabilize between operations
+    await Future.delayed(const Duration(milliseconds: 300));
+    
+    // Properly disconnect from glasses
     if (leftGlass != null) {
       await leftGlass!.disconnect();
       leftGlass = null;
     }
+    
+    // Add a small delay between disconnections
+    await Future.delayed(const Duration(milliseconds: 300));
+    
     if (rightGlass != null) {
       await rightGlass!.disconnect();
       rightGlass = null;
     }
+
+    // We're keeping the connection information unless explicitly requested
+    // This allows for automatic reconnection later
+    
+    // Remove periodic sync timer
+    _syncTimer?.cancel();
+    _syncTimer = null;
+
     debugPrint('Disconnected from glasses');
+  }
+  
+  // Use this method when you want to fully disconnect and forget the glasses
+  Future<void> forgetGlasses() async {
+    await disconnectFromGlasses();
+    
+    // Clear saved connection information
+    final pref = await SharedPreferences.getInstance();
+    await pref.remove('left');
+    await pref.remove('right');
+    await pref.remove('leftName');
+    await pref.remove('rightName');
+    
+    debugPrint('Glasses connection information cleared');
   }
 }

@@ -21,8 +21,11 @@ class Glass {
   BluetoothCharacteristic? uartRx;
 
   StreamSubscription<List<int>>? notificationSubscription;
+  StreamSubscription<BluetoothConnectionState>? connectionStateSubscription;
   Timer? heartbeatTimer;
   int heartbeatSeq = 0;
+  int _connectRetries = 0;
+  static const int maxConnectRetries = 3;
 
   // Callback function for when side button is pressed
   SideButtonCallback? onSideButtonPress;
@@ -44,14 +47,65 @@ class Glass {
 
   Future<void> connect() async {
     try {
-      await device.connect();
-      await discoverServices();
-      device.requestMtu(251);
-      device.requestConnectionPriority(
-          connectionPriorityRequest: ConnectionPriority.high);
-      startHeartbeat();
+      // Cancel any existing subscriptions first
+      await disconnect();
+      
+      // Set up connection state monitoring first
+      connectionStateSubscription = device.connectionState.listen((BluetoothConnectionState state) {
+        debugPrint('[$side Glass] Connection state: $state');
+        if (state == BluetoothConnectionState.disconnected && _connectRetries < maxConnectRetries) {
+          _connectRetries++;
+          debugPrint('[$side Glass] Auto-reconnect attempt $_connectRetries/$maxConnectRetries');
+          _connectWithRetry();
+        }
+      });
+
+      // Initial connection attempt
+      await _connectWithRetry();
+      _connectRetries = 0; // Reset counter after successful connection
+      
     } catch (e) {
       debugPrint('[$side Glass] Connection error: $e');
+      await disconnect();
+      rethrow;
+    }
+  }
+
+  Future<void> _connectWithRetry() async {
+    try {
+      if (!device.isConnected) {
+        // Retry the connection up to maxConnectRetries times
+        bool connected = false;
+        while (!connected && _connectRetries < maxConnectRetries) {
+          try {
+            debugPrint('[$side Glass] Trying to connect (attempt ${_connectRetries + 1})');
+            await device.connect(timeout: const Duration(seconds: 15));
+            connected = true;
+          } catch (e) {
+            _connectRetries++;
+            debugPrint('[$side Glass] Connection attempt $_connectRetries failed: $e');
+            if (_connectRetries < maxConnectRetries) {
+              await Future.delayed(const Duration(seconds: 1));
+            } else {
+              throw Exception('Failed to connect after $maxConnectRetries attempts');
+            }
+          }
+        }
+      }
+      
+      // Once connected, proceed with service discovery and setup
+      debugPrint('[$side Glass] Connected, discovering services...');
+      await discoverServices();
+      debugPrint('[$side Glass] Services discovered, setting up MTU...');
+      await device.requestMtu(251);
+      debugPrint('[$side Glass] Setting connection priority...');
+      await device.requestConnectionPriority(
+          connectionPriorityRequest: ConnectionPriority.high);
+      startHeartbeat();
+      debugPrint('[$side Glass] Setup complete - connection established successfully');
+    } catch (e) {
+      debugPrint('[$side Glass] Connection process failed: $e');
+      throw e; // Let the caller handle this error
     }
   }
 
@@ -98,7 +152,7 @@ class Glass {
     //String hexData =
     //    data.map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ');
     //debugPrint('[$side Glass] Received data: $hexData');
-    
+
     // Check for side button press event
     if (data.length >= 2 && data[0] == Commands.BUTTON_PRESS) {
       debugPrint('[$side Glass] Side button pressed');
@@ -107,7 +161,7 @@ class Glass {
         onSideButtonPress!();
       }
     }
-    
+
     // Call the receive handler function
     await reciever.receiveHandler(side, data);
   }
@@ -149,9 +203,22 @@ class Glass {
   }
 
   Future<void> disconnect() async {
-    await device.disconnect();
+    // Cancel all subscriptions
     await notificationSubscription?.cancel();
+    await connectionStateSubscription?.cancel();
     heartbeatTimer?.cancel();
-    debugPrint('Disconnected from $side glass.');
+
+    // Reset state
+    _connectRetries = 0;
+    uartTx = null;
+    uartRx = null;
+
+    // Then disconnect the device
+    try {
+      await device.disconnect();
+    } catch (e) {
+      debugPrint('[$side Glass] Error during disconnect: $e');
+    }
+    debugPrint('[$side Glass] Disconnected and cleaned up');
   }
 }
