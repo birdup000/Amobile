@@ -151,17 +151,19 @@ class AGiXTChatWidget implements AGiXTWidget {
         // Wait a second before navigating to ensure the response is processed
         await Future.delayed(const Duration(seconds: 1));
 
-        // Build the navigation URL with the conversation ID and token
+        // Build the navigation URL with the conversation ID but WITHOUT the token
         final baseUrl = AuthService.appUri;
-        final navigationUrl = '$baseUrl/chat/$conversationId?token=$jwt';
+        final navigationUrl = '$baseUrl/chat/$conversationId';
 
         debugPrint('Navigating to conversation: $navigationUrl');
         
         // Show a temporary overlay notification with the conversation ID for debugging
         _showConversationIdNotification(conversationId);
 
-        // Use direct JavaScript navigation which may be more reliable than loadRequest
-        final jsNavigationScript = '''
+        // Try more direct approaches to navigation
+        
+        // 1. First try: Plain JavaScript location change
+        final plainJsNavigation = '''
         (function() {
           console.log('Navigating to: $navigationUrl');
           window.location.href = '$navigationUrl';
@@ -169,11 +171,31 @@ class AGiXTChatWidget implements AGiXTWidget {
         })();
         ''';
         
-        // Try JavaScript navigation first
-        await webViewController.runJavaScriptReturningResult(jsNavigationScript);
+        await webViewController.runJavaScriptReturningResult(plainJsNavigation);
         
-        // Also use the standard navigation as a fallback
+        // 2. Second try: Use loadRequest (after a short delay)
+        await Future.delayed(const Duration(milliseconds: 300));
         await webViewController.loadRequest(Uri.parse(navigationUrl));
+        
+        // 3. Third try: Use history.pushState for smoother navigation
+        final historyNavigation = '''
+        (function() {
+          try {
+            console.log('Trying history.pushState navigation to: $navigationUrl');
+            history.pushState({}, '', '$navigationUrl');
+            window.dispatchEvent(new Event('popstate'));
+            return true;
+          } catch(e) {
+            console.error('History navigation failed:', e);
+            return false;
+          }
+        })();
+        ''';
+        
+        await Future.delayed(const Duration(milliseconds: 500));
+        await webViewController.runJavaScriptReturningResult(historyNavigation);
+        
+        debugPrint('All navigation attempts completed');
       } else {
         debugPrint('WebViewController not available for navigation');
       }
