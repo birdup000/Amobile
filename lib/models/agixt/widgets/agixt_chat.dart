@@ -121,7 +121,8 @@ class AGiXTChatWidget implements AGiXTWidget {
             // Prepare the navigation URL for the WebView
             final appUri = AuthService.serverUrl;
             debugPrint('Will navigate to: $appUri/chat/$responseId');
-            
+            // Wait 1 second to ensure the WebView is ready
+            await Future.delayed(const Duration(seconds: 1));
             // Use JavaScript to navigate the WebView if possible
             _navigateWebViewToChat(responseId.toString());
           }
