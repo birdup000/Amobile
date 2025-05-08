@@ -6,6 +6,7 @@ import 'package:agixt/models/agixt/daily.dart';
 import 'package:agixt/models/agixt/widgets/agixt_widget.dart';
 import 'package:agixt/models/g1/note.dart';
 import 'package:agixt/services/cookie_manager.dart';
+import 'package:agixt/utils/app_events.dart';
 import 'package:device_calendar/device_calendar.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -104,6 +105,27 @@ class AGiXTChatWidget implements AGiXTWidget {
             jsonResponse['choices'][0]['message'] != null) {
           final answer = jsonResponse['choices'][0]['message']['content'];
 
+          // Extract the conversation ID from the response
+          final responseId = jsonResponse['id'];
+          if (responseId != null && responseId.toString().isNotEmpty) {
+            debugPrint('Extracted conversation ID from response: $responseId');
+            
+            // Save the conversation ID
+            final cookieManager = CookieManager();
+            await cookieManager.saveAgixtConversationId(responseId.toString());
+            
+            // Notify any listeners that we need to navigate to the chat page
+            // This will be picked up by the AppEvents system
+            AppEvents.fireDataChanged();
+            
+            // Prepare the navigation URL for the WebView
+            final appUri = AuthService.serverUrl;
+            debugPrint('Will navigate to: $appUri/chat/$responseId');
+            
+            // Use JavaScript to navigate the WebView if possible
+            _navigateWebViewToChat(responseId.toString());
+          }
+
           // Save this interaction for future reference
           await _saveInteraction(message, answer);
 
@@ -120,6 +142,17 @@ class AGiXTChatWidget implements AGiXTWidget {
       debugPrint('AGiXT Chat error: $e');
       return "An error occurred while connecting to AGiXT.";
     }
+  }
+  
+  // Method to navigate the WebView to the chat page with the given ID
+  void _navigateWebViewToChat(String conversationId) {
+    // This method doesn't directly manipulate the WebView
+    // Instead, it triggers an event that will be picked up by the HomePage
+    // which manages the WebView
+    AppEvents.fireDataChanged(data: {
+      'type': 'navigate_to_chat',
+      'conversation_id': conversationId
+    });
   }
 
   // Build context data containing today's daily items, active checklists, and calendar items
