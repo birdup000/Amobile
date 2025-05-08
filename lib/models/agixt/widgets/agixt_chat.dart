@@ -6,6 +6,7 @@ import 'package:agixt/models/agixt/daily.dart';
 import 'package:agixt/models/agixt/widgets/agixt_widget.dart';
 import 'package:agixt/models/g1/note.dart';
 import 'package:agixt/services/cookie_manager.dart';
+import 'package:agixt/utils/app_events.dart';
 import 'package:device_calendar/device_calendar.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -104,6 +105,20 @@ class AGiXTChatWidget implements AGiXTWidget {
             jsonResponse['choices'][0]['message'] != null) {
           final answer = jsonResponse['choices'][0]['message']['content'];
 
+          // Extract the conversation ID from the response
+          final responseId = jsonResponse['id'];
+          if (responseId != null && responseId.toString().isNotEmpty) {
+            debugPrint('Extracted conversation ID from response: $responseId');
+            
+            // Save the conversation ID
+            final cookieManager = CookieManager();
+            await cookieManager.saveAgixtConversationId(responseId.toString());
+            
+            // Notify any listeners that we need to navigate to the chat page
+            // This will be picked up by the AppEvents system
+            AppEvents.fireDataChanged();
+          }
+
           // Save this interaction for future reference
           await _saveInteraction(message, answer);
 
@@ -121,7 +136,7 @@ class AGiXTChatWidget implements AGiXTWidget {
       return "An error occurred while connecting to AGiXT.";
     }
   }
-
+  
   // Build context data containing today's daily items, active checklists, and calendar items
   Future<String> _buildContextData() async {
     List<String> contextSections = [];
