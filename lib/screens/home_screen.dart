@@ -50,6 +50,53 @@ class _HomePageState extends State<HomePage> {
     _setupBluetoothListeners();
     _initializeWebView();
     _ensureConversationId(); // Ensure a conversation ID exists at startup
+    
+    // Listen for navigation events
+    AppEvents.addListener(_handleAppEvents);
+  }
+  
+  @override
+  void dispose() {
+    // Remove event listener
+    AppEvents.removeListener(_handleAppEvents);
+    super.dispose();
+  }
+  
+  // Handle app events, especially for navigation requests
+  void _handleAppEvents() {
+    // Check if there's navigation data in the event
+    final eventData = AppEvents.getLastEventData();
+    if (eventData != null && 
+        eventData['type'] == 'navigate_to_chat' && 
+        eventData['conversation_id'] != null) {
+      
+      final conversationId = eventData['conversation_id'] as String;
+      _navigateToChat(conversationId);
+    }
+  }
+  
+  // Navigate the WebView to a specific chat conversation
+  Future<void> _navigateToChat(String conversationId) async {
+    if (_webViewController == null) return;
+    
+    try {
+      // Get the base URL
+      final baseUrl = AuthService.serverUrl;
+      final chatUrl = '$baseUrl/chat/$conversationId';
+      
+      debugPrint('Navigating WebView to conversation: $chatUrl');
+      
+      // Navigate using the WebViewController
+      await _webViewController!.loadRequest(Uri.parse(chatUrl));
+      
+      // Also update the conversation ID in the cookie manager
+      final cookieManager = CookieManager();
+      await cookieManager.saveAgixtConversationId(conversationId);
+      
+      debugPrint('WebView navigation to conversation complete');
+    } catch (e) {
+      debugPrint('Error navigating to chat conversation: $e');
+    }
   }
 
   Future<void> _loadUserDetails() async {
