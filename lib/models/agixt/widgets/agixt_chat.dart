@@ -155,14 +155,59 @@ class AGiXTChatWidget implements AGiXTWidget {
         final navigationUrl = '$baseUrl/chat/$conversationId?token=$jwt';
 
         debugPrint('Navigating to conversation: $navigationUrl');
+        
+        // Show a temporary overlay notification with the conversation ID for debugging
+        _showConversationIdNotification(conversationId);
 
-        // Navigate using the WebViewController
+        // Use direct JavaScript navigation which may be more reliable than loadRequest
+        final jsNavigationScript = '''
+        (function() {
+          console.log('Navigating to: $navigationUrl');
+          window.location.href = '$navigationUrl';
+          return true;
+        })();
+        ''';
+        
+        // Try JavaScript navigation first
+        await webViewController.runJavaScriptReturningResult(jsNavigationScript);
+        
+        // Also use the standard navigation as a fallback
         await webViewController.loadRequest(Uri.parse(navigationUrl));
       } else {
         debugPrint('WebViewController not available for navigation');
       }
     } catch (e) {
       debugPrint('Error navigating to conversation: $e');
+    }
+  }
+  
+  // Show a temporary notification with the conversation ID for debugging
+  void _showConversationIdNotification(String conversationId) {
+    try {
+      // Use the global key from main.dart to get the current context
+      final context = AGiXTApp.navigatorKey.currentContext;
+      
+      if (context != null) {
+        // Show a snackbar with the conversation ID
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Conversation ID: $conversationId'),
+            duration: const Duration(seconds: 5),
+            action: SnackBarAction(
+              label: 'Dismiss',
+              onPressed: () {
+                ScaffoldMessenger.of(context).hideCurrentSnackBar();
+              },
+            ),
+          ),
+        );
+        
+        debugPrint('Showed conversation ID notification: $conversationId');
+      } else {
+        debugPrint('Could not show notification, context is null');
+      }
+    } catch (e) {
+      debugPrint('Error showing conversation ID notification: $e');
     }
   }
 
