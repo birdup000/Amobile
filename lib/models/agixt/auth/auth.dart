@@ -297,10 +297,17 @@ class AuthService {
       }
       
       // Find the primary company
-      final primaryCompany = userInfo.companies.firstWhere(
-        (company) => company.primary, 
-        orElse: () => userInfo.companies.isNotEmpty ? userInfo.companies.first : null
-      );
+      CompanyModel? primaryCompany;
+      try {
+        primaryCompany = userInfo.companies.firstWhere(
+          (company) => company.primary
+        );
+      } catch (e) {
+        // No primary company found, try to use the first one if available
+        if (userInfo.companies.isNotEmpty) {
+          primaryCompany = userInfo.companies.first;
+        }
+      }
       
       if (primaryCompany != null) {
         // Return the agent name from the primary company
