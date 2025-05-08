@@ -8,8 +8,12 @@ plugins {
 // Load keystore properties from external file
 def keystorePropertiesFile = rootProject.file("keystore.properties")
 def keystoreProperties = new Properties()
+def useReleaseKeys = false
 if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+    // Only set to true if both the file exists and the keystore file actually exists
+    def keystoreFile = keystoreProperties['storeFile'] ? file(keystoreProperties['storeFile']) : null
+    useReleaseKeys = keystoreFile != null && keystoreFile.exists()
 }
 
 android {
@@ -19,11 +23,17 @@ android {
 
     // Add signing configs for release builds
     signingConfigs {
+        debug {
+            // Use debug keys by default
+        }
         release {
-            keyAlias keystoreProperties['keyAlias']
-            keyPassword keystoreProperties['keyPassword']
-            storeFile keystoreProperties['storeFile'] ? file(keystoreProperties['storeFile']) : null
-            storePassword keystoreProperties['storePassword']
+            // Only apply release signing config if keystore file exists
+            if (useReleaseKeys) {
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+                storeFile file(keystoreProperties['storeFile'])
+                storePassword keystoreProperties['storePassword']
+            }
         }
     }
   
@@ -68,8 +78,8 @@ android {
 
     buildTypes {
         release {
-            // Using our release signing config instead of debug keys
-            signingConfig signingConfigs.release
+            // Only use release signing config if keystore exists, otherwise use debug signing
+            signingConfig useReleaseKeys ? signingConfigs.release : signingConfigs.debug
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             minifyEnabled true
             shrinkResources true
