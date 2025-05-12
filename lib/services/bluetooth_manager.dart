@@ -280,13 +280,13 @@ class BluetoothManager {
             connected = true;
           } catch (e) {
             retries++;
-            debugPrint('Connection attempt ${retries} failed: $e');
+            debugPrint('Connection attempt $retries failed: $e');
             if (retries < 3) {
               await Future.delayed(Duration(seconds: 1));
             }
           }
         }
-        
+
         if (!connected) {
           throw Exception('Failed to connect after 3 attempts');
         }
@@ -298,7 +298,8 @@ class BluetoothManager {
           if (leftGlass!.isConnected && rightGlass!.isConnected) {
             _isScanning = false;
             stopScanning();
-            await Future.delayed(const Duration(seconds: 2)); // Increased delay for stability
+            await Future.delayed(
+                const Duration(seconds: 2)); // Increased delay for stability
             await _sync();
           }
         }
@@ -400,10 +401,11 @@ class BluetoothManager {
     // Check if display is enabled in settings
     bool isDisplayEnabled = await _isGlassesDisplayEnabled();
     if (!isDisplayEnabled) {
-      debugPrint('Glasses display is disabled in settings. Text not displayed: $text');
+      debugPrint(
+          'Glasses display is disabled in settings. Text not displayed: $text');
       return;
     }
-      
+
     final textMsg = TextMessage(text);
     List<List<int>> packets = textMsg.constructSendText();
 
@@ -422,10 +424,11 @@ class BluetoothManager {
     // Check if display is enabled in settings
     bool isDisplayEnabled = await _isGlassesDisplayEnabled();
     if (!isDisplayEnabled) {
-      debugPrint('Glasses display is disabled in settings. Dashboard layout not changed.');
+      debugPrint(
+          'Glasses display is disabled in settings. Dashboard layout not changed.');
       return;
     }
-    
+
     // concat the command with the option
     List<int> command = DashboardLayout.DASHBOARD_CHANGE_COMMAND.toList();
     command.addAll(option);
@@ -440,7 +443,7 @@ class BluetoothManager {
       debugPrint('Glasses display is disabled in settings. Note not sent.');
       return;
     }
-    
+
     List<int> noteBytes = note.buildAddCommand();
     await sendCommandToGlasses(noteBytes);
   }
@@ -452,7 +455,7 @@ class BluetoothManager {
       debugPrint('Glasses display is disabled in settings. Bitmap not sent.');
       return;
     }
-    
+
     List<Uint8List> textBytes = Utils.divideUint8List(bitmap, 194);
 
     List<List<int>?> sentPackets = [];
@@ -485,10 +488,11 @@ class BluetoothManager {
     // Check if display is enabled in settings
     bool isDisplayEnabled = await _isGlassesDisplayEnabled();
     if (!isDisplayEnabled) {
-      debugPrint('Glasses display is disabled in settings. Notification not sent: ${notification.title}');
+      debugPrint(
+          'Glasses display is disabled in settings. Notification not sent: ${notification.title}');
       return;
     }
-    
+
     G1Notification notif = G1Notification(ncsNotification: notification);
     List<Uint8List> notificationChunks = await notif.constructNotification();
 
@@ -679,7 +683,7 @@ class BluetoothManager {
     debugPrint(
         'Transcription displayed on glasses, AI assistant will process shortly');
   }
-  
+
   // Check if glasses display is enabled from settings
   Future<bool> _isGlassesDisplayEnabled() async {
     try {
@@ -696,19 +700,19 @@ class BluetoothManager {
     // Cancel any active subscriptions
     _scanSubscription?.cancel();
     _scanningSubscription?.cancel();
-    
+
     // Proper delay to allow Bluetooth stack to stabilize between operations
     await Future.delayed(const Duration(milliseconds: 300));
-    
+
     // Properly disconnect from glasses
     if (leftGlass != null) {
       await leftGlass!.disconnect();
       leftGlass = null;
     }
-    
+
     // Add a small delay between disconnections
     await Future.delayed(const Duration(milliseconds: 300));
-    
+
     if (rightGlass != null) {
       await rightGlass!.disconnect();
       rightGlass = null;
@@ -716,25 +720,52 @@ class BluetoothManager {
 
     // We're keeping the connection information unless explicitly requested
     // This allows for automatic reconnection later
-    
+
     // Remove periodic sync timer
     _syncTimer?.cancel();
     _syncTimer = null;
 
     debugPrint('Disconnected from glasses');
   }
-  
+
   // Use this method when you want to fully disconnect and forget the glasses
   Future<void> forgetGlasses() async {
     await disconnectFromGlasses();
-    
+
     // Clear saved connection information
     final pref = await SharedPreferences.getInstance();
     await pref.remove('left');
     await pref.remove('right');
     await pref.remove('leftName');
     await pref.remove('rightName');
-    
+
     debugPrint('Glasses connection information cleared');
+  }
+
+  // Clear any content from the glasses display
+  Future<void> clearGlassesDisplay() async {
+    debugPrint('Clearing display on glasses because silent mode was enabled');
+
+    // Send a special command to clear the display
+    // We can do this by sending an empty text with minimum delay
+    // This effectively clears any existing text/content
+
+    // First, we'll bypass the display check since we explicitly want to clear the display
+    // regardless of the current display preference setting
+
+    final textMsg = TextMessage(' '); // Using a space to ensure it's processed
+    List<List<int>> packets = textMsg.constructSendText();
+
+    for (int i = 0; i < packets.length; i++) {
+      await sendCommandToGlasses(packets[i]);
+      if (i < 2) {
+        // init packet
+        await Future.delayed(Duration(milliseconds: 300));
+      } else {
+        await Future.delayed(Duration(milliseconds: 100)); // Minimal delay
+      }
+    }
+
+    debugPrint('Glasses display has been cleared');
   }
 }
