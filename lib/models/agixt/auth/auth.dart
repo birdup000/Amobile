@@ -321,4 +321,27 @@ class AuthService {
       return null;
     }
   }
+  
+  // Get preference for displaying Even Realities glasses
+  static Future<bool> getGlassesDisplayPreference() async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      // Default is true (enabled) if preference doesn't exist
+      return prefs.getBool('display_glasses_enabled') ?? true;
+    } catch (e) {
+      debugPrint('Error getting glasses display preference: $e');
+      // Default to true if there's an error
+      return true;
+    }
+  }
+  
+  // Save preference for displaying Even Realities glasses
+  static Future<void> setGlassesDisplayPreference(bool value) async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('display_glasses_enabled', value);
+    } catch (e) {
+      debugPrint('Error saving glasses display preference: $e');
+    }
+  }
 }

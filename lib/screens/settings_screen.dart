@@ -18,11 +18,13 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
   String? _userEmail;
   String? _userName;
+  bool _isGlassesDisplayEnabled = true;
 
   @override
   void initState() {
     super.initState();
     _loadUserDetails();
+    _loadGlassesDisplayPreference();
   }
 
   Future<void> _loadUserDetails() async {
@@ -35,6 +37,19 @@ class _SettingsPageState extends State<SettingsPage> {
         _userName = '${userInfo.firstName} ${userInfo.lastName}'.trim();
       }
     });
+  }
+
+  Future<void> _loadGlassesDisplayPreference() async {
+    // Replace with actual implementation to load preference
+    final preference = await AuthService.getGlassesDisplayPreference();
+    setState(() {
+      _isGlassesDisplayEnabled = preference;
+    });
+  }
+
+  Future<void> _saveGlassesDisplayPreference(bool value) async {
+    // Replace with actual implementation to save preference
+    await AuthService.setGlassesDisplayPreference(value);
   }
 
   @override
@@ -145,6 +160,28 @@ class _SettingsPageState extends State<SettingsPage> {
                 MaterialPageRoute(builder: (context) => CalendarsPage()),
               );
             },
+          ),
+
+          const Divider(),
+
+          // Toggle for Even Realities Glasses
+          ListTile(
+            title: Row(
+              children: [
+                Icon(Icons.visibility),
+                SizedBox(width: 10),
+                Text('Display Even Realities Glasses'),
+              ],
+            ),
+            trailing: Switch(
+              value: _isGlassesDisplayEnabled,
+              onChanged: (bool value) {
+                setState(() {
+                  _isGlassesDisplayEnabled = value;
+                });
+                _saveGlassesDisplayPreference(value);
+              },
+            ),
           ),
         ],
       ),

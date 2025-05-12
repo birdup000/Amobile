@@ -20,6 +20,7 @@ import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:notification_listener_service/notification_event.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:agixt/models/agixt/auth/auth.dart';
 import 'dart:async';
 import '../utils/constants.dart';
 import '../models/g1/glass.dart';
@@ -396,6 +397,13 @@ class BluetoothManager {
 
   Future<void> sendText(String text,
       {Duration delay = const Duration(seconds: 5)}) async {
+    // Check if display is enabled in settings
+    bool isDisplayEnabled = await _isGlassesDisplayEnabled();
+    if (!isDisplayEnabled) {
+      debugPrint('Glasses display is disabled in settings. Text not displayed: $text');
+      return;
+    }
+      
     final textMsg = TextMessage(text);
     List<List<int>> packets = textMsg.constructSendText();
 
@@ -411,6 +419,13 @@ class BluetoothManager {
   }
 
   Future<void> setDashboardLayout(List<int> option) async {
+    // Check if display is enabled in settings
+    bool isDisplayEnabled = await _isGlassesDisplayEnabled();
+    if (!isDisplayEnabled) {
+      debugPrint('Glasses display is disabled in settings. Dashboard layout not changed.');
+      return;
+    }
+    
     // concat the command with the option
     List<int> command = DashboardLayout.DASHBOARD_CHANGE_COMMAND.toList();
     command.addAll(option);
@@ -419,11 +434,25 @@ class BluetoothManager {
   }
 
   Future<void> sendNote(Note note) async {
+    // Check if display is enabled in settings
+    bool isDisplayEnabled = await _isGlassesDisplayEnabled();
+    if (!isDisplayEnabled) {
+      debugPrint('Glasses display is disabled in settings. Note not sent.');
+      return;
+    }
+    
     List<int> noteBytes = note.buildAddCommand();
     await sendCommandToGlasses(noteBytes);
   }
 
   Future<void> sendBitmap(Uint8List bitmap) async {
+    // Check if display is enabled in settings
+    bool isDisplayEnabled = await _isGlassesDisplayEnabled();
+    if (!isDisplayEnabled) {
+      debugPrint('Glasses display is disabled in settings. Bitmap not sent.');
+      return;
+    }
+    
     List<Uint8List> textBytes = Utils.divideUint8List(bitmap, 194);
 
     List<List<int>?> sentPackets = [];
@@ -453,6 +482,13 @@ class BluetoothManager {
 
   // Send a notification to the glasses
   Future<void> sendNotification(NCSNotification notification) async {
+    // Check if display is enabled in settings
+    bool isDisplayEnabled = await _isGlassesDisplayEnabled();
+    if (!isDisplayEnabled) {
+      debugPrint('Glasses display is disabled in settings. Notification not sent: ${notification.title}');
+      return;
+    }
+    
     G1Notification notif = G1Notification(ncsNotification: notification);
     List<Uint8List> notificationChunks = await notif.constructNotification();
 
@@ -622,6 +658,13 @@ class BluetoothManager {
       return;
     }
 
+    // Check if display is enabled in settings
+    bool isDisplayEnabled = await _isGlassesDisplayEnabled();
+    if (!isDisplayEnabled) {
+      debugPrint('Glasses display is disabled in settings. Skipping display.');
+      return;
+    }
+
     debugPrint('Displaying transcription on glasses: $transcription');
 
     // Format the text to show it's a transcription
@@ -635,6 +678,18 @@ class BluetoothManager {
 
     debugPrint(
         'Transcription displayed on glasses, AI assistant will process shortly');
+  }
+  
+  // Check if glasses display is enabled from settings
+  Future<bool> _isGlassesDisplayEnabled() async {
+    try {
+      // Use the AuthService method
+      return await AuthService.getGlassesDisplayPreference();
+    } catch (e) {
+      debugPrint('Error checking glasses display preference: $e');
+      // Default to enabled if there's an error
+      return true;
+    }
   }
 
   Future<void> disconnectFromGlasses() async {
