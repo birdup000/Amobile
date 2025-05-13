@@ -1,11 +1,11 @@
 import 'package:agixt/widgets/glass_status.dart';
 import 'package:agixt/screens/settings/dashboard_screen.dart';
-import 'package:agixt/screens/settings/debug_screen.dart';
 import 'package:agixt/screens/settings/notifications_screen.dart';
 import 'package:agixt/widgets/gravatar_image.dart';
 import 'package:agixt/models/agixt/auth/auth.dart';
 import 'package:agixt/screens/auth/profile_screen.dart';
 import 'package:agixt/screens/calendars_screen.dart';
+import 'package:agixt/services/bluetooth_manager.dart';
 import 'package:flutter/material.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -18,11 +18,13 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
   String? _userEmail;
   String? _userName;
+  bool _isGlassesDisplayEnabled = true;
 
   @override
   void initState() {
     super.initState();
     _loadUserDetails();
+    _loadGlassesDisplayPreference();
   }
 
   Future<void> _loadUserDetails() async {
@@ -35,6 +37,28 @@ class _SettingsPageState extends State<SettingsPage> {
         _userName = '${userInfo.firstName} ${userInfo.lastName}'.trim();
       }
     });
+  }
+
+  Future<void> _loadGlassesDisplayPreference() async {
+    // Replace with actual implementation to load preference
+    final preference = await AuthService.getGlassesDisplayPreference();
+    setState(() {
+      _isGlassesDisplayEnabled = preference;
+    });
+  }
+
+  Future<void> _saveGlassesDisplayPreference(bool value) async {
+    // Save the preference
+    await AuthService.setGlassesDisplayPreference(value);
+
+    // If silent mode is enabled (value is false for display), clear the glasses display immediately
+    if (value == false) {
+      // Get instance of BluetoothManager and clear display if glasses are connected
+      final bluetoothManager = BluetoothManager();
+      if (bluetoothManager.isConnected) {
+        await bluetoothManager.clearGlassesDisplay();
+      }
+    }
   }
 
   @override
@@ -145,6 +169,30 @@ class _SettingsPageState extends State<SettingsPage> {
                 MaterialPageRoute(builder: (context) => CalendarsPage()),
               );
             },
+          ),
+
+          const Divider(),
+
+          // Toggle for Even Realities Glasses
+          ListTile(
+            title: Row(
+              children: [
+                Icon(Icons.visibility),
+                SizedBox(width: 10),
+                Text('Silent Mode'),
+              ],
+            ),
+            trailing: Switch(
+              value:
+                  !_isGlassesDisplayEnabled, // Invert the value for Silent Mode
+              onChanged: (bool value) {
+                setState(() {
+                  _isGlassesDisplayEnabled =
+                      !value; // Invert the value since true means "silent mode on"
+                });
+                _saveGlassesDisplayPreference(!value); // Invert when saving
+              },
+            ),
           ),
         ],
       ),

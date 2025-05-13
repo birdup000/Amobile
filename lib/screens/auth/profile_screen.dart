@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:agixt/models/agixt/auth/auth.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:agixt/widgets/gravatar_image.dart';
 import 'package:agixt/widgets/current_agixt.dart';
 import 'package:agixt/utils/ui_perfs.dart';
@@ -28,32 +27,46 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final UiPerfs _ui = UiPerfs.singleton;
   final BluetoothManager bluetoothManager = BluetoothManager();
   final AIService aiService = AIService();
-  
+
   // Add variables for debugging AGiXT values
   String? _currentAgent;
   String? _currentConversationId;
+
+  // Track if silent mode is enabled
+  bool _isSilentModeEnabled = false;
 
   @override
   void initState() {
     super.initState();
     _loadUserData();
     _loadAGiXTDebugInfo();
-    
+    _loadSilentModeStatus();
+
     // Register a listener for data changes
     AppEvents.addListener(_onDataChanged);
   }
-  
+
+  // Load the current silent mode status
+  Future<void> _loadSilentModeStatus() async {
+    final isDisplayEnabled = await AuthService.getGlassesDisplayPreference();
+    setState(() {
+      // When display is disabled, silent mode is enabled
+      _isSilentModeEnabled = !isDisplayEnabled;
+    });
+  }
+
   @override
   void dispose() {
     // Remove the listener when the screen is disposed
     AppEvents.removeListener(_onDataChanged);
     super.dispose();
   }
-  
+
   // Handler for data change events
   void _onDataChanged() {
     debugPrint('Data change detected in ProfileScreen - refreshing debug info');
     _loadAGiXTDebugInfo();
+    _loadSilentModeStatus(); // Also refresh silent mode status
   }
 
   Future<void> _loadUserData() async {
@@ -84,15 +97,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // Method to load AGiXT debug information
   Future<void> _loadAGiXTDebugInfo() async {
     final cookieManager = CookieManager();
-    
+
     // Get the current agent from cookie manager
     final agent = await cookieManager.getAgixtAgentCookie();
-    
+
     // Get the current conversation ID from cookie manager
     final conversationId = await cookieManager.getAgixtConversationId();
-    
-    debugPrint('Debug info - Agent: ${agent ?? "Not set"}, ConversationID: ${conversationId ?? "Not set"}');
-    
+
+    debugPrint(
+        'Debug info - Agent: ${agent ?? "Not set"}, ConversationID: ${conversationId ?? "Not set"}');
+
     if (mounted) {
       setState(() {
         _currentAgent = agent ?? 'Not set';
@@ -113,16 +127,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  Future<void> _openAGiXTWeb() async {
-    final url = await AuthService.getWebUrlWithToken();
-    final uri = Uri.parse(url);
-
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    }
-  }
+  // Removed unused _openAGiXTWeb method
 
   Future<void> _handleSideButtonPress() async {
+    // Check if silent mode is enabled
+    if (_isSilentModeEnabled) {
+      // Show a message to the user that silent mode is enabled
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text(
+                'Silent mode is enabled. Please disable it to use the AI assistant.')),
+      );
+      return;
+    }
+
     // Check if user is logged in
     if (!await AuthService.isLoggedIn()) {
       bluetoothManager.sendText('Please log in to use AI assistant');
@@ -135,8 +153,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final appName = AuthService.appName;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Profile & Features'),
@@ -278,7 +294,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         children: [
                           Row(
                             children: [
-                              Icon(Icons.mic, color: Theme.of(context).primaryColor),
+                              Icon(Icons.mic,
+                                  color: Theme.of(context).primaryColor),
                               const SizedBox(width: 10),
                               const Text(
                                 'AI Assistant',
@@ -290,17 +307,40 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ],
                           ),
                           const SizedBox(height: 10),
-                          const Text(
-                            'Press the side button on your glasses to speak with the AI assistant.',
-                            style: TextStyle(fontSize: 14),
-                          ),
+                          _isSilentModeEnabled
+                              ? Row(
+                                  children: [
+                                    const Icon(Icons.volume_off,
+                                        color: Colors.red, size: 16),
+                                    const SizedBox(width: 5),
+                                    Expanded(
+                                      child: Text(
+                                        'Silent Mode is enabled. Assistant is disabled.',
+                                        style: const TextStyle(
+                                            fontSize: 14, color: Colors.red),
+                                      ),
+                                    ),
+                                  ],
+                                )
+                              : const Text(
+                                  'Press the side button on your glasses to speak with the AI assistant.',
+                                  style: TextStyle(fontSize: 14),
+                                ),
                           const SizedBox(height: 15),
                           ElevatedButton.icon(
-                            onPressed: _handleSideButtonPress,
-                            icon: const Icon(Icons.record_voice_over),
+                            onPressed: _isSilentModeEnabled
+                                ? null
+                                : _handleSideButtonPress, // Disable button when silent mode is on
+                            icon: Icon(
+                              Icons.record_voice_over,
+                              color: _isSilentModeEnabled
+                                  ? Colors.grey
+                                  : null, // Gray out icon when silent mode is on
+                            ),
                             label: const Text('Activate Assistant'),
                             style: ElevatedButton.styleFrom(
                               minimumSize: const Size(double.infinity, 44),
+                              // Button will be automatically grayed out when onPressed is null
                             ),
                           ),
                         ],
@@ -310,7 +350,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   // Current AGiXT info
                   CurrentAGiXT(),
-                  
+
                   // Debug Info Card - Show current agent and conversation ID
                   Card(
                     margin: const EdgeInsets.symmetric(vertical: 10.0),
@@ -333,11 +373,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ],
                           ),
                           const SizedBox(height: 16),
-                          
+
                           // Current Agent
                           Row(
                             children: [
-                              const Icon(Icons.smart_toy, size: 18, color: Colors.blue),
+                              const Icon(Icons.smart_toy,
+                                  size: 18, color: Colors.blue),
                               const SizedBox(width: 8),
                               const Text(
                                 'Current Agent:',
@@ -347,7 +388,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               Expanded(
                                 child: Text(
                                   _currentAgent ?? 'Not set',
-                                  style: const TextStyle(fontFamily: 'monospace'),
+                                  style:
+                                      const TextStyle(fontFamily: 'monospace'),
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
@@ -360,13 +402,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               ),
                             ],
                           ),
-                          
+
                           const SizedBox(height: 8),
-                          
+
                           // Current Conversation ID
                           Row(
                             children: [
-                              const Icon(Icons.chat, size: 18, color: Colors.green),
+                              const Icon(Icons.chat,
+                                  size: 18, color: Colors.green),
                               const SizedBox(width: 8),
                               const Text(
                                 'Conversation ID:',
@@ -376,7 +419,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               Expanded(
                                 child: Text(
                                   _currentConversationId ?? 'Not set',
-                                  style: const TextStyle(fontFamily: 'monospace'),
+                                  style:
+                                      const TextStyle(fontFamily: 'monospace'),
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
@@ -408,7 +452,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ListTile(
                           leading: _ui.trainNerdMode
                               ? Image(
-                                  image: AssetImage('assets/icons/reference.png'),
+                                  image:
+                                      AssetImage('assets/icons/reference.png'),
                                   height: 24,
                                 )
                               : Icon(Icons.sunny),
@@ -417,7 +462,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           onTap: () {
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (context) => AGiXTDailyPage()),
+                              MaterialPageRoute(
+                                  builder: (context) => AGiXTDailyPage()),
                             );
                           },
                         ),
@@ -435,7 +481,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           onTap: () {
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (context) => AGiXTStopPage()),
+                              MaterialPageRoute(
+                                  builder: (context) => AGiXTStopPage()),
                             );
                           },
                         ),
@@ -444,7 +491,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ListTile(
                           leading: _ui.trainNerdMode
                               ? Image(
-                                  image: AssetImage('assets/icons/oorsprong.png'),
+                                  image:
+                                      AssetImage('assets/icons/oorsprong.png'),
                                   height: 24,
                                 )
                               : Icon(Icons.checklist),
@@ -453,7 +501,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           onTap: () {
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (context) => AGiXTChecklistPage()),
+                              MaterialPageRoute(
+                                  builder: (context) => AGiXTChecklistPage()),
                             );
                           },
                         ),
