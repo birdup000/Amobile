@@ -9,7 +9,8 @@ import 'package:agixt/models/agixt/daily.dart';
 import 'package:agixt/models/agixt/stop.dart';
 import 'package:agixt/screens/auth/login_screen.dart';
 import 'package:agixt/screens/auth/profile_screen.dart';
-import 'package:agixt/services/ai_service.dart';
+// import 'package:agixt/services/ai_service.dart'; // AIService is used by WakewordService, already imported.
+import 'package:agixt/services/wakeword_service.dart'; // Import WakewordService
 import 'package:agixt/services/bluetooth_manager.dart';
 import 'package:agixt/services/stops_manager.dart';
 import 'package:agixt/utils/ui_perfs.dart';
@@ -59,6 +60,13 @@ void main() async {
   await _initHive();
   await initializeService();
   await UiPerfs.singleton.load();
+
+  // Initialize WakewordService
+  final wakewordService = WakewordService.singleton;
+  await wakewordService.initialize();
+  // Start wakeword detection after initialization.
+  // Consider app settings or user preferences before starting automatically.
+  await wakewordService.startWakewordDetection();
 
   await BluetoothManager.singleton.initialize();
   BluetoothManager.singleton.attemptReconnectFromStorage();

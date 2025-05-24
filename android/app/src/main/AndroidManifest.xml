@@ -21,6 +21,7 @@
     <uses-permission android:name="android.permission.READ_CALENDAR" />
     <uses-permission android:name="android.permission.WRITE_CALENDAR" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.CAPTURE_AUDIO_HOTWORD" />
 
     <!-- Ensure compatibility with different Android versions -->
     <uses-feature android:name="android.hardware.bluetooth" android:required="false" />
@@ -91,6 +92,14 @@
                 <action android:name="com.htc.intent.action.QUICKBOOT_POWERON"/>
             </intent-filter>
         </receiver>
+
+        <service android:name="android.service.voice.HotwordRecognitionService"
+            android:exported="true"
+            android:permission="android.permission.BIND_HOTWORD_DETECTION_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.voice.HotwordDetectionService"/>
+            </intent-filter>
+        </service>
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

@@ -7,6 +7,7 @@ import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugins.GeneratedPluginRegistrant
 import io.flutter.plugin.common.MethodChannel
 import dev.agixt.agixt.cpp.Cpp
+import dev.agixt.agixt.wakeword.WakewordDetector // Import WakewordDetector
 import android.content.Context
 import android.content.Intent
 import android.app.Service
@@ -23,10 +24,12 @@ import android.view.KeyEvent // Import KeyEvent
 class MainActivity: FlutterActivity() {
     private val CHANNEL = "dev.agixt.agixt/channel"
     private val BUTTON_EVENTS_CHANNEL = "dev.agixt.agixt/button_events" // New channel for button events
+    private val WAKEWORD_CHANNEL = "dev.agixt.agixt/wakeword"
     private val PERMISSION_REQUEST_CODE = 100
     private val TAG = "MainActivity"
     private var methodChannelInitialized = false
     private var pendingToken: String? = null
+    private var wakewordDetector: WakewordDetector? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -198,6 +201,22 @@ class MainActivity: FlutterActivity() {
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, BUTTON_EVENTS_CHANNEL).setMethodCallHandler { call, result ->
             // Currently no methods expected from Flutter on this channel, but handler is needed
             result.notImplemented()
+        }
+
+        // Wakeword detection channel
+        wakewordDetector = WakewordDetector(this, MethodChannel(flutterEngine.dartExecutor.binaryMessenger, WAKEWORD_CHANNEL))
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, WAKEWORD_CHANNEL).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "startWakewordDetection" -> {
+                    wakewordDetector?.startDetection()
+                    result.success(null)
+                }
+                "stopWakewordDetection" -> {
+                    wakewordDetector?.stopDetection()
+                    result.success(null)
+                }
+                else -> result.notImplemented()
+            }
         }
     }
 
